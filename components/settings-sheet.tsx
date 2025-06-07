@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Download, Upload } from "lucide-react"
+import { Menu, Download, Upload, Check } from "lucide-react"
 import type { PomodoroSession } from "@/types"
 
 interface SettingsSheetProps {
@@ -37,6 +38,50 @@ export function SettingsSheet({
   onExportSession,
   onImportSession,
 }: SettingsSheetProps) {
+  // Local state for all settings
+  const [localSettings, setLocalSettings] = useState({
+    autoMusicPause: settings.autoMusicPause,
+    workTime: pomodoro.workTime,
+    breakTime: pomodoro.breakTime,
+    totalSessions: pomodoro.totalSessions,
+  })
+
+  // State for save button feedback
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle")
+
+  const handleSaveAllSettings = async () => {
+    setSaveState("saving")
+
+    // Update settings
+    onUpdateSettings({
+      ...settings,
+      autoMusicPause: localSettings.autoMusicPause,
+    })
+
+    // Update pomodoro settings
+    onUpdatePomodoro({
+      workTime: localSettings.workTime,
+      breakTime: localSettings.breakTime,
+      totalSessions: localSettings.totalSessions,
+      // Reset timer with new work time if not currently active
+      timeLeft: !pomodoro.isActive ? localSettings.workTime * 60 : pomodoro.timeLeft,
+    })
+
+    // Show saved state with animation
+    setTimeout(() => {
+      setSaveState("saved")
+      setTimeout(() => {
+        setSaveState("idle")
+      }, 2000)
+    }, 300)
+  }
+
+  const hasChanges =
+    localSettings.autoMusicPause !== settings.autoMusicPause ||
+    localSettings.workTime !== pomodoro.workTime ||
+    localSettings.breakTime !== pomodoro.breakTime ||
+    localSettings.totalSessions !== pomodoro.totalSessions
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -58,8 +103,8 @@ export function SettingsSheet({
               <p className="text-sm text-gray-600">Automatically pause background music when course video is playing</p>
             </div>
             <Switch
-              checked={settings.autoMusicPause}
-              onCheckedChange={(checked) => onUpdateSettings({ ...settings, autoMusicPause: checked })}
+              checked={localSettings.autoMusicPause}
+              onCheckedChange={(checked) => setLocalSettings((prev) => ({ ...prev, autoMusicPause: checked }))}
             />
           </div>
 
@@ -70,38 +115,75 @@ export function SettingsSheet({
             <div>
               <Label>Work Time (minutes)</Label>
               <Slider
-                value={[pomodoro.workTime]}
-                onValueChange={([value]) => onUpdatePomodoro({ workTime: value })}
+                value={[localSettings.workTime]}
+                onValueChange={([value]) => setLocalSettings((prev) => ({ ...prev, workTime: value }))}
                 max={60}
                 min={5}
                 step={5}
                 className="mt-2"
               />
-              <p className="text-sm text-gray-600 mt-1">{pomodoro.workTime} minutes</p>
+              <p className="text-sm text-gray-600 mt-1">{localSettings.workTime} minutes</p>
             </div>
             <div>
               <Label>Break Time (minutes)</Label>
               <Slider
-                value={[pomodoro.breakTime]}
-                onValueChange={([value]) => onUpdatePomodoro({ breakTime: value })}
+                value={[localSettings.breakTime]}
+                onValueChange={([value]) => setLocalSettings((prev) => ({ ...prev, breakTime: value }))}
                 max={30}
                 min={5}
                 step={5}
                 className="mt-2"
               />
-              <p className="text-sm text-gray-600 mt-1">{pomodoro.breakTime} minutes</p>
+              <p className="text-sm text-gray-600 mt-1">{localSettings.breakTime} minutes</p>
             </div>
             <div>
               <Label>Total Sessions</Label>
               <Slider
-                value={[pomodoro.totalSessions]}
-                onValueChange={([value]) => onUpdatePomodoro({ totalSessions: value })}
+                value={[localSettings.totalSessions]}
+                onValueChange={([value]) => setLocalSettings((prev) => ({ ...prev, totalSessions: value }))}
                 max={8}
                 min={1}
                 step={1}
                 className="mt-2"
               />
-              <p className="text-sm text-gray-600 mt-1">{pomodoro.totalSessions} sessions</p>
+              <p className="text-sm text-gray-600 mt-1">{localSettings.totalSessions} sessions</p>
+            </div>
+
+            {/* Redesigned Save Button to match theme */}
+            <div className="pt-2">
+              {hasChanges && saveState === "idle" && (
+                <p className="text-xs text-amber-600 mb-2 text-center font-medium">● Unsaved changes</p>
+              )}
+
+              <Button
+                onClick={handleSaveAllSettings}
+                className={`w-full transition-all duration-200 ${
+                  saveState === "saving"
+                    ? "bg-blue-500 hover:bg-blue-600"
+                    : saveState === "saved"
+                      ? "bg-green-500 hover:bg-green-600"
+                      : hasChanges
+                        ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+                disabled={!hasChanges || saveState === "saving"}
+                variant="default"
+                size="default"
+              >
+                {saveState === "saving" ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Applying Changes...</span>
+                  </div>
+                ) : saveState === "saved" ? (
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4" />
+                    <span>Settings Saved!</span>
+                  </div>
+                ) : (
+                  <span className="font-medium">Save All Settings</span>
+                )}
+              </Button>
             </div>
           </div>
 
@@ -110,17 +192,20 @@ export function SettingsSheet({
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Session Management</h3>
             <p className="text-sm text-gray-600">
-              Export your complete learning session including all courses, timestamps, music playlists, and settings.
-              Import to resume exactly where you left off.
+              Export your complete learning session including all courses, timestamps, music playlists, notes, and
+              settings. Import to resume exactly where you left off.
             </p>
             <div className="flex gap-4">
-              <Button onClick={onExportSession} className="flex-1">
+              <Button
+                onClick={onExportSession}
+                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              >
                 <Download className="w-4 h-4 mr-2" />
                 Export Session
               </Button>
               <div className="flex-1">
                 <Input type="file" accept=".json" onChange={onImportSession} className="hidden" id="import-session" />
-                <Button asChild variant="outline" className="w-full">
+                <Button asChild variant="outline" className="w-full border-2 hover:bg-gray-50">
                   <label htmlFor="import-session" className="cursor-pointer">
                     <Upload className="w-4 h-4 mr-2" />
                     Import Session
@@ -135,11 +220,11 @@ export function SettingsSheet({
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Current Session Stats</h3>
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg border">
                 <div className="text-2xl font-bold text-blue-600">{coursesCount}</div>
                 <div className="text-sm text-gray-600">Total Courses</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg border">
                 <div className="text-2xl font-bold text-green-600">{musicTracksCount}</div>
                 <div className="text-sm text-gray-600">Music Tracks</div>
               </div>

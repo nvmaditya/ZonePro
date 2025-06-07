@@ -138,6 +138,7 @@ export default function FocusedLearningApp() {
           lastWatched: new Date(),
           playlistId,
           playlistIndex: 0,
+          notes: [],
         }
         setCourses([...courses, newCourse])
         setNewCourseUrl("")
@@ -208,6 +209,11 @@ export default function FocusedLearningApp() {
       courses: courses.map((course) => ({
         ...course,
         lastWatched: course.lastWatched,
+        notes:
+          course.notes?.map((note) => ({
+            ...note,
+            createdAt: note.createdAt,
+          })) || [],
       })),
       pomodoro,
       music: musicPlayer,
@@ -235,6 +241,11 @@ export default function FocusedLearningApp() {
             data.courses.map((course) => ({
               ...course,
               lastWatched: new Date(course.lastWatched),
+              notes:
+                course.notes?.map((note) => ({
+                  ...note,
+                  createdAt: new Date(note.createdAt),
+                })) || [],
             })) || [],
           )
           setPomodoro(data.pomodoro || pomodoro)

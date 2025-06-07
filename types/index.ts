@@ -1,3 +1,10 @@
+export interface CourseNote {
+  id: string
+  timestamp: number
+  content: string
+  createdAt: Date
+}
+
 export interface CourseProgress {
   id: string
   title: string
@@ -9,6 +16,7 @@ export interface CourseProgress {
   lastWatched: Date
   playlistId?: string
   playlistIndex?: number
+  notes?: CourseNote[]
 }
 
 export interface PomodoroSession {
