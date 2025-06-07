@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,17 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Download, Upload, Check } from "lucide-react"
+import { Menu, Download, Upload, Check, Trash2, AlertTriangle } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import type { PomodoroSession } from "@/types"
 
 interface SettingsSheetProps {
@@ -49,31 +59,55 @@ export function SettingsSheet({
   // State for save button feedback
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle")
 
+  // State for clear data confirmation dialog
+  const [showClearDataDialog, setShowClearDataDialog] = useState(false)
+
+  // Update local settings when props change
+  useEffect(() => {
+    setLocalSettings({
+      autoMusicPause: settings.autoMusicPause,
+      workTime: pomodoro.workTime,
+      breakTime: pomodoro.breakTime,
+      totalSessions: pomodoro.totalSessions,
+    })
+  }, [settings.autoMusicPause, pomodoro.workTime, pomodoro.breakTime, pomodoro.totalSessions])
+
   const handleSaveAllSettings = async () => {
     setSaveState("saving")
 
-    // Update settings
-    onUpdateSettings({
-      ...settings,
-      autoMusicPause: localSettings.autoMusicPause,
-    })
-
-    // Update pomodoro settings
-    onUpdatePomodoro({
-      workTime: localSettings.workTime,
-      breakTime: localSettings.breakTime,
-      totalSessions: localSettings.totalSessions,
-      // Reset timer with new work time if not currently active
-      timeLeft: !pomodoro.isActive ? localSettings.workTime * 60 : pomodoro.timeLeft,
-    })
-
-    // Show saved state with animation
+    // Update settings with a small delay to ensure UI responsiveness
     setTimeout(() => {
-      setSaveState("saved")
+      // Update settings
+      onUpdateSettings({
+        ...settings,
+        autoMusicPause: localSettings.autoMusicPause,
+      })
+
+      // Update pomodoro settings
+      onUpdatePomodoro({
+        workTime: localSettings.workTime,
+        breakTime: localSettings.breakTime,
+        totalSessions: localSettings.totalSessions,
+        // Reset timer with new work time if not currently active
+        timeLeft: !pomodoro.isActive ? localSettings.workTime * 60 : pomodoro.timeLeft,
+      })
+
+      // Show saved state with animation
       setTimeout(() => {
-        setSaveState("idle")
-      }, 2000)
+        setSaveState("saved")
+        setTimeout(() => {
+          setSaveState("idle")
+        }, 2000)
+      }, 300)
     }, 300)
+  }
+
+  const clearAllData = () => {
+    // Clear all localStorage data
+    localStorage.removeItem("focusedLearningData")
+
+    // Reload the page to reset all state
+    window.location.reload()
   }
 
   const hasChanges =
@@ -149,7 +183,7 @@ export function SettingsSheet({
               <p className="text-sm text-gray-600 mt-1">{localSettings.totalSessions} sessions</p>
             </div>
 
-            {/* Redesigned Save Button to match theme */}
+            {/* Redesigned Save Button - Grayish initially, black when changed */}
             <div className="pt-2">
               {hasChanges && saveState === "idle" && (
                 <p className="text-xs text-amber-600 mb-2 text-center font-medium">● Unsaved changes</p>
@@ -159,11 +193,11 @@ export function SettingsSheet({
                 onClick={handleSaveAllSettings}
                 className={`w-full transition-all duration-200 ${
                   saveState === "saving"
-                    ? "bg-blue-500 hover:bg-blue-600"
+                    ? "bg-gray-700 hover:bg-gray-800"
                     : saveState === "saved"
-                      ? "bg-green-500 hover:bg-green-600"
+                      ? "bg-green-600 hover:bg-green-700"
                       : hasChanges
-                        ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md"
+                        ? "bg-gray-900 hover:bg-black shadow-md"
                         : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
                 disabled={!hasChanges || saveState === "saving"}
@@ -196,22 +230,42 @@ export function SettingsSheet({
               settings. Import to resume exactly where you left off.
             </p>
             <div className="flex gap-4">
+              {/* Redesigned Export Button - Grayish style */}
               <Button
                 onClick={onExportSession}
-                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                className="flex-1 bg-gray-700 hover:bg-gray-900 transition-colors duration-200"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Export Session
               </Button>
               <div className="flex-1">
                 <Input type="file" accept=".json" onChange={onImportSession} className="hidden" id="import-session" />
-                <Button asChild variant="outline" className="w-full border-2 hover:bg-gray-50">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full border-2 hover:bg-gray-100 text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                >
                   <label htmlFor="import-session" className="cursor-pointer">
                     <Upload className="w-4 h-4 mr-2" />
                     Import Session
                   </label>
                 </Button>
               </div>
+            </div>
+
+            {/* Clear All Data Button */}
+            <div className="pt-2">
+              <Button
+                onClick={() => setShowClearDataDialog(true)}
+                variant="destructive"
+                className="w-full bg-red-600 hover:bg-red-700"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear All Data
+              </Button>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                This will delete all your courses, notes, and settings
+              </p>
             </div>
           </div>
 
@@ -220,18 +274,40 @@ export function SettingsSheet({
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Current Session Stats</h3>
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg border">
-                <div className="text-2xl font-bold text-blue-600">{coursesCount}</div>
+              <div className="text-center p-4 bg-gray-100 rounded-lg border border-gray-200">
+                <div className="text-2xl font-bold text-gray-800">{coursesCount}</div>
                 <div className="text-sm text-gray-600">Total Courses</div>
               </div>
-              <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg border">
-                <div className="text-2xl font-bold text-green-600">{musicTracksCount}</div>
+              <div className="text-center p-4 bg-gray-100 rounded-lg border border-gray-200">
+                <div className="text-2xl font-bold text-gray-800">{musicTracksCount}</div>
                 <div className="text-sm text-gray-600">Music Tracks</div>
               </div>
             </div>
           </div>
         </div>
       </SheetContent>
+
+      {/* Clear Data Confirmation Dialog */}
+      <AlertDialog open={showClearDataDialog} onOpenChange={setShowClearDataDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Clear All Application Data
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all your courses, notes, music playlists, and settings. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={clearAllData} className="bg-red-600 hover:bg-red-700 text-white">
+              Yes, Delete Everything
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   )
 }

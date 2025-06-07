@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { BookOpen, Plus, StickyNote, Trash2 } from "lucide-react"
 import type { CourseProgress, CourseNote } from "@/types"
 import { formatTime } from "@/utils/youtube"
@@ -34,7 +35,9 @@ export function CoursePlayer({
   const coursePlayerRef = useRef<any>(null)
   const [playerReady, setPlayerReady] = useState(false)
   const [newNote, setNewNote] = useState("")
-  const [showNotes, setShowNotes] = useState(false)
+  const [showNoteDialog, setShowNoteDialog] = useState(false)
+  const [playerStateBeforeNote, setPlayerStateBeforeNote] = useState<number | null>(null)
+  const [currentTimestamp, setCurrentTimestamp] = useState(0)
   // Add internal music state tracking
   const musicStateRef = useRef<boolean>(false)
 
@@ -192,7 +195,7 @@ export function CoursePlayer({
           musicStateRef.current,
         )
 
-        if (shouldResume) {
+        if (shouldResume && !showNoteDialog) {
           console.log("Auto-resuming music")
           onMusicControl("play")
         }
@@ -253,13 +256,44 @@ export function CoursePlayer({
     }
   }
 
+  const getPlayerState = () => {
+    if (!coursePlayerRef.current || !playerReady) return null
+    try {
+      return coursePlayerRef.current.getPlayerState()
+    } catch (error) {
+      console.warn("Error getting player state:", error)
+      return null
+    }
+  }
+
+  const startAddingNote = () => {
+    if (!coursePlayerRef.current || !playerReady || !currentCourse) return
+
+    try {
+      // Store current player state
+      const currentState = getPlayerState()
+      setPlayerStateBeforeNote(currentState)
+
+      // Store current timestamp
+      const timestamp = getCurrentTime()
+      setCurrentTimestamp(timestamp)
+
+      // Pause the video
+      coursePlayerRef.current.pauseVideo()
+
+      // Open note dialog
+      setShowNoteDialog(true)
+    } catch (error) {
+      console.warn("Error starting note:", error)
+    }
+  }
+
   const addNote = () => {
     if (!newNote.trim() || !currentCourse) return
 
-    const timestamp = getCurrentTime()
     const note: CourseNote = {
       id: Date.now().toString(),
-      timestamp,
+      timestamp: currentTimestamp,
       content: newNote.trim(),
       createdAt: new Date(),
     }
@@ -267,6 +301,34 @@ export function CoursePlayer({
     const updatedNotes = [...(currentCourse.notes || []), note]
     onCourseUpdate(currentCourse.id, { notes: updatedNotes })
     setNewNote("")
+    setShowNoteDialog(false)
+
+    // Resume video if it was playing before
+    if (playerStateBeforeNote === window.YT.PlayerState.PLAYING && coursePlayerRef.current) {
+      try {
+        coursePlayerRef.current.playVideo()
+      } catch (error) {
+        console.warn("Error resuming video:", error)
+      }
+    }
+
+    setPlayerStateBeforeNote(null)
+  }
+
+  const cancelAddNote = () => {
+    setNewNote("")
+    setShowNoteDialog(false)
+
+    // Resume video if it was playing before
+    if (playerStateBeforeNote === window.YT.PlayerState.PLAYING && coursePlayerRef.current) {
+      try {
+        coursePlayerRef.current.playVideo()
+      } catch (error) {
+        console.warn("Error resuming video:", error)
+      }
+    }
+
+    setPlayerStateBeforeNote(null)
   }
 
   const deleteNote = (noteId: string) => {
@@ -291,21 +353,10 @@ export function CoursePlayer({
           <BookOpen className="w-5 h-5" />
           Current Course
         </CardTitle>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant={showNotes ? "default" : "outline"}
-            onClick={() => setShowNotes(!showNotes)}
-            className="flex items-center gap-2"
-          >
-            <StickyNote className="w-4 h-4" />
-            Notes {currentCourse?.notes?.length ? `(${currentCourse.notes.length})` : ""}
-          </Button>
-          <Button size="sm" onClick={onAddCourse}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Course
-          </Button>
-        </div>
+        <Button size="sm" onClick={onAddCourse}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Course
+        </Button>
       </CardHeader>
       <CardContent>
         {currentCourse ? (
@@ -314,80 +365,62 @@ export function CoursePlayer({
             <div className="aspect-video bg-black rounded-lg overflow-hidden">
               <div id="course-player" className="w-full h-full"></div>
             </div>
-            <Progress
-              value={currentCourse.duration > 0 ? (currentCourse.currentTime / currentCourse.duration) * 100 : 0}
-            />
-            {currentCourse.duration > 0 && (
-              <p className="text-sm text-gray-600">
-                Progress: {formatTime(Math.floor(currentCourse.currentTime))} /{" "}
-                {formatTime(Math.floor(currentCourse.duration))}
+            <div className="flex justify-between items-center">
+              <Progress
+                value={currentCourse.duration > 0 ? (currentCourse.currentTime / currentCourse.duration) * 100 : 0}
+                className="flex-1 mr-4"
+              />
+              <p className="text-sm text-gray-600 mr-4">
+                {formatTime(Math.floor(currentCourse.currentTime))} / {formatTime(Math.floor(currentCourse.duration))}
               </p>
-            )}
+            </div>
 
-            {/* Notes Section */}
-            {showNotes && (
-              <div className="space-y-4 border-t pt-4">
+            {/* Add Note Button */}
+            <Button onClick={startAddingNote} variant="outline" size="sm" disabled={!playerReady} className="w-full">
+              <StickyNote className="w-4 h-4 mr-2" />
+              Add Note
+            </Button>
+
+            {/* Notes List */}
+            {currentCourse.notes && currentCourse.notes.length > 0 && (
+              <div className="space-y-3 max-h-60 overflow-y-auto border-t pt-4">
                 <h4 className="font-medium flex items-center gap-2">
                   <StickyNote className="w-4 h-4" />
-                  Course Notes
+                  Course Notes ({currentCourse.notes.length})
                 </h4>
-
-                {/* Add Note */}
-                <div className="space-y-2">
-                  <Textarea
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Add a note at current timestamp..."
-                    className="min-h-[80px]"
-                  />
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm text-gray-500">
-                      Note will be saved at: {formatTime(Math.floor(getCurrentTime()))}
-                    </p>
-                    <Button onClick={addNote} disabled={!newNote.trim()} size="sm">
-                      Add Note
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Notes List */}
-                {currentCourse.notes && currentCourse.notes.length > 0 ? (
-                  <div className="space-y-3 max-h-60 overflow-y-auto">
-                    {currentCourse.notes
-                      .sort((a, b) => a.timestamp - b.timestamp)
-                      .map((note) => (
-                        <div key={note.id} className="bg-gray-50 p-3 rounded-lg">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Badge
-                                  variant="secondary"
-                                  className="cursor-pointer hover:bg-blue-100"
-                                  onClick={() => jumpToTimestamp(note.timestamp)}
-                                >
-                                  {formatTime(Math.floor(note.timestamp))}
-                                </Badge>
-                                <span className="text-xs text-gray-500">
-                                  {new Date(note.createdAt).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <p className="text-sm">{note.content}</p>
+                <div className="space-y-3">
+                  {currentCourse.notes
+                    .sort((a, b) => a.timestamp - b.timestamp)
+                    .map((note) => (
+                      <div key={note.id} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge
+                                variant="secondary"
+                                className="cursor-pointer hover:bg-blue-100"
+                                onClick={() => jumpToTimestamp(note.timestamp)}
+                              >
+                                {formatTime(Math.floor(note.timestamp))}
+                              </Badge>
+                              <span className="text-xs text-gray-500">
+                                {new Date(note.createdAt).toLocaleDateString()}
+                              </span>
                             </div>
-                            <Button
-                              onClick={() => deleteNote(note.id)}
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <p className="text-sm">{note.content}</p>
                           </div>
+                          <Button
+                            onClick={() => deleteNote(note.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                      ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">No notes yet. Add your first note above!</p>
-                )}
+                      </div>
+                    ))}
+                </div>
               </div>
             )}
           </div>
@@ -397,6 +430,32 @@ export function CoursePlayer({
             <p className="text-gray-600">No course selected. Add a course to get started!</p>
           </div>
         )}
+
+        {/* Note Dialog */}
+        <Dialog open={showNoteDialog} onOpenChange={(open) => !open && cancelAddNote()}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Note at {formatTime(Math.floor(currentTimestamp))}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <Textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder="What did you learn at this moment?"
+                className="min-h-[120px]"
+                autoFocus
+              />
+            </div>
+            <DialogFooter className="flex justify-between sm:justify-between">
+              <Button variant="outline" onClick={cancelAddNote}>
+                Cancel
+              </Button>
+              <Button onClick={addNote} disabled={!newNote.trim()}>
+                Save Note & Resume
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   )
