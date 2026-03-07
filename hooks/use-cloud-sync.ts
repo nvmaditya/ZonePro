@@ -10,11 +10,7 @@ import {
     syncMusicToCloud,
     fetchMusicFromCloud,
 } from "@/lib/supabase/sync";
-import type {
-    CourseProgress,
-    PomodoroSession,
-    MusicPlayer,
-} from "@/types";
+import type { CourseProgress, PomodoroSession, MusicPlayer } from "@/types";
 
 interface CloudSyncState {
     courses: CourseProgress[];
@@ -86,19 +82,25 @@ export function useCloudSync(
                 if (cloudCourses.length > 0) {
                     setters.setCourses((prev: CourseProgress[]) => {
                         const cloudIds = new Set(cloudCourses.map((c) => c.id));
-                        const localOnly = prev.filter((c) => !cloudIds.has(c.id));
+                        const localOnly = prev.filter(
+                            (c) => !cloudIds.has(c.id),
+                        );
                         return [...cloudCourses, ...localOnly];
                     });
                 }
 
                 if (cloudSettings) {
-                    setters.setSettings({ autoMusicPause: cloudSettings.settings.autoMusicPause });
+                    setters.setSettings({
+                        autoMusicPause: cloudSettings.settings.autoMusicPause,
+                    });
                     setters.setPomodoro((prev) => ({
                         ...prev,
                         workTime: cloudSettings.pomodoro.workTime,
                         breakTime: cloudSettings.pomodoro.breakTime,
                         totalSessions: cloudSettings.pomodoro.totalSessions,
-                        timeLeft: prev.isActive ? prev.timeLeft : cloudSettings.pomodoro.workTime * 60,
+                        timeLeft: prev.isActive
+                            ? prev.timeLeft
+                            : cloudSettings.pomodoro.workTime * 60,
                     }));
                 }
 
@@ -128,14 +130,25 @@ export function useCloudSync(
             const supabase = createClient();
             await Promise.all([
                 syncCoursesToCloud(supabase, userId, state.courses),
-                syncSettingsToCloud(supabase, userId, state.settings, state.pomodoro),
+                syncSettingsToCloud(
+                    supabase,
+                    userId,
+                    state.settings,
+                    state.pomodoro,
+                ),
                 syncMusicToCloud(supabase, userId, state.musicPlayer.playlist),
             ]);
             setSyncStatus("synced");
         } catch {
             setSyncStatus("error");
         }
-    }, [userId, state.courses, state.settings, state.pomodoro, state.musicPlayer.playlist]);
+    }, [
+        userId,
+        state.courses,
+        state.settings,
+        state.pomodoro,
+        state.musicPlayer.playlist,
+    ]);
 
     // Debounce push: wait 5 seconds after last change
     useEffect(() => {

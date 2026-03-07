@@ -18,7 +18,8 @@ export async function createClient() {
                             cookieStore.set(name, value, options),
                         );
                     } catch {
-                        // Server Component: cookies are read-only
+                        // The setAll method was called from a Server Component.
+                        // This can be ignored if you have middleware refreshing sessions.
                     }
                 },
             },

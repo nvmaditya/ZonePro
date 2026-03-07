@@ -7,15 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -38,28 +31,26 @@ export default function LoginPage() {
         if (error) {
             setError(error.message);
             setLoading(false);
-        } else {
-            router.push("/");
-            router.refresh();
+            return;
         }
+
+        router.push("/");
+        router.refresh();
     };
 
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
-                    <CardTitle className="text-2xl font-bold">
-                        Welcome to ZonePro
-                    </CardTitle>
-                    <CardDescription>
-                        Sign in to your account to continue
-                    </CardDescription>
+                    <CardTitle className="text-3xl font-bold">ZonePro</CardTitle>
+                    <CardDescription>Sign in to your productivity zone</CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLogin}>
                     <CardContent className="space-y-4">
                         {error && (
-                            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                                {error}
+                            <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                                <span>{error}</span>
                             </div>
                         )}
                         <div className="space-y-2">
@@ -86,23 +77,20 @@ export default function LoginPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="flex flex-col gap-4">
-                        <Button
-                            type="submit"
-                            className="w-full"
-                            disabled={loading}
-                        >
-                            {loading && (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Button type="submit" className="w-full" disabled={loading}>
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Signing in...
+                                </>
+                            ) : (
+                                "Sign In"
                             )}
-                            Sign In
                         </Button>
                         <p className="text-sm text-muted-foreground text-center">
                             Don&apos;t have an account?{" "}
-                            <Link
-                                href="/signup"
-                                className="text-primary underline-offset-4 hover:underline"
-                            >
-                                Sign Up
+                            <Link href="/signup" className="text-primary hover:underline font-medium">
+                                Sign up
                             </Link>
                         </p>
                     </CardFooter>

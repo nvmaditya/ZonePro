@@ -239,8 +239,8 @@ export function YouTubePlaylist({
                                     key={video.id}
                                     className={`flex items-start gap-3 p-2 rounded-lg border cursor-pointer transition-colors ${
                                         index === currentVideoIndex
-                                            ? "bg-primary/10 border-primary/30"
-                                            : "hover:bg-muted/50"
+                                            ? "bg-primary/10 border-primary/20"
+                                            : "hover:bg-muted"
                                     }`}
                                     onClick={() =>
                                         handleVideoClick(video, index)
@@ -390,7 +390,7 @@ export function YouTubePlaylist({
                     </div>
                 ) : (
                     <div className="text-center py-4 sm:py-6 text-muted-foreground">
-                        <List className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 text-muted-foreground/50" />
+                        <List className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 text-muted-foreground" />
                         <p className="text-xs sm:text-sm">
                             No videos found in this playlist
                         </p>
