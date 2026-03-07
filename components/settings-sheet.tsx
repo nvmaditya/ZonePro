@@ -40,8 +40,6 @@ import type { PomodoroSession } from "@/types";
 interface SettingsSheetProps {
     settings: {
         autoMusicPause: boolean;
-        defaultWorkTime: number;
-        defaultBreakTime: number;
     };
     pomodoro: PomodoroSession;
     coursesCount: number;

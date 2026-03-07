@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Plus, StickyNote, Trash2 } from "lucide-react";
-import type { CourseProgress, VideoNote } from "@/types";
+import type { CourseProgress, VideoNote, YTPlayer } from "@/types";
 import { formatTime } from "@/utils/youtube";
 
 interface CoursePlayerProps {
@@ -34,7 +34,7 @@ export function CoursePlayer({
     musicWasPlaying,
     setMusicWasPlaying,
 }: CoursePlayerProps) {
-    const coursePlayerRef = useRef<any>(null);
+    const coursePlayerRef = useRef<YTPlayer | null>(null);
     const [playerReady, setPlayerReady] = useState(false);
     const [newNote, setNewNote] = useState("");
     const [currentTimestamp, setCurrentTimestamp] = useState(0);
@@ -99,7 +99,7 @@ export function CoursePlayer({
                                 iv_load_policy: 3,
                             },
                             events: {
-                                onReady: (event: any) => {
+                                onReady: (event: { target: YTPlayer }) => {
                                     try {
                                         event.target.seekTo(
                                             currentCourse.currentTime
@@ -109,7 +109,7 @@ export function CoursePlayer({
                                         // onReady error
                                     }
                                 },
-                                onStateChange: (event: any) => {
+                                onStateChange: (event: { data: number }) => {
                                     handlePlayerStateChange(event.data);
                                 },
                                 onError: () => {
@@ -185,7 +185,7 @@ export function CoursePlayer({
             if (playerState === window.YT.PlayerState.PLAYING) {
                 if (settings.autoMusicPause) {
                     try {
-                        const musicControls = (window as any).musicPlayerControls;
+                        const musicControls = window.musicPlayerControls;
                         if (
                             musicControls &&
                             typeof musicControls.isPlaying === "function"

@@ -47,14 +47,14 @@ export function CourseList({
         const playlistVideos = Object.values(course.playlistProgress);
         const totalDuration = playlistVideos.reduce(
             (acc, video) => acc + video.duration,
-            0
+            0,
         );
         const totalWatched = playlistVideos.reduce(
             (acc, video) => acc + video.currentTime,
-            0
+            0,
         );
         const completedVideos = playlistVideos.filter(
-            (video) => video.completed
+            (video) => video.completed,
         ).length;
         const totalVideos = playlistVideos.length;
         const actualTotalVideos =
@@ -122,13 +122,15 @@ export function CourseList({
                                             <div className="space-y-1">
                                                 <p className="text-sm text-gray-600">
                                                     {formatTime(
-                                                        Math.floor(totalWatched)
+                                                        Math.floor(
+                                                            totalWatched,
+                                                        ),
                                                     )}{" "}
                                                     /{" "}
                                                     {formatTime(
                                                         Math.floor(
-                                                            totalDuration
-                                                        )
+                                                            totalDuration,
+                                                        ),
                                                     )}
                                                     {course.playlistId &&
                                                         actualTotalVideos >
@@ -158,7 +160,7 @@ export function CourseList({
                                         <p className="text-xs text-gray-500">
                                             Last watched:{" "}
                                             {new Date(
-                                                course.lastWatched
+                                                course.lastWatched,
                                             ).toLocaleDateString()}
                                         </p>
                                     </div>
@@ -190,12 +192,16 @@ export function CourseList({
                         No courses added yet
                     </p>
                 )}
-                <AlertDialog open={!!courseToDelete} onOpenChange={(open) => !open && setCourseToDelete(null)}>
+                <AlertDialog
+                    open={!!courseToDelete}
+                    onOpenChange={(open) => !open && setCourseToDelete(null)}
+                >
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Delete Course</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will permanently delete this course and all its notes. This action cannot be undone.
+                                This will permanently delete this course and all
+                                its notes. This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

@@ -77,15 +77,57 @@ export interface SessionData {
     music: MusicPlayer;
     settings: {
         autoMusicPause: boolean;
-        defaultWorkTime: number;
-        defaultBreakTime: number;
     };
     timestamp: Date;
 }
 
+export interface YTPlayerEvent {
+    target: YTPlayer;
+    data: number;
+}
+
+export interface YTPlayer {
+    playVideo: () => void;
+    pauseVideo: () => void;
+    seekTo: (seconds: number, allowSeekAhead?: boolean) => void;
+    getCurrentTime: () => number;
+    getDuration: () => number;
+    getPlayerState: () => number;
+    setVolume: (volume: number) => void;
+    loadVideoById: (videoId: string) => void;
+    destroy: () => void;
+}
+
+export interface YTPlayerConfig {
+    height: string;
+    width: string;
+    videoId: string;
+    playerVars?: Record<string, unknown>;
+    events?: {
+        onReady?: (event: YTPlayerEvent) => void;
+        onStateChange?: (event: YTPlayerEvent) => void;
+        onError?: (event: YTPlayerEvent) => void;
+    };
+}
+
 declare global {
     interface Window {
-        YT: any;
+        YT: {
+            Player: new (elementId: string, config: YTPlayerConfig) => YTPlayer;
+            PlayerState: {
+                UNSTARTED: number;
+                ENDED: number;
+                PLAYING: number;
+                PAUSED: number;
+                BUFFERING: number;
+                CUED: number;
+            };
+        };
         onYouTubeIframeAPIReady: () => void;
+        musicPlayerControls?: {
+            play: () => void;
+            pause: () => void;
+            isPlaying: () => boolean;
+        };
     }
 }

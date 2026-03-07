@@ -20,7 +20,11 @@ import {
     ChevronUp,
     ChevronDown,
 } from "lucide-react";
-import type { MusicPlayer as MusicPlayerType, MusicTrack, YTPlayer } from "@/types";
+import type {
+    MusicPlayer as MusicPlayerType,
+    MusicTrack,
+    YTPlayer,
+} from "@/types";
 import { getYouTubeVideoId } from "@/utils/youtube";
 import { DEFAULT_LOFI_VIDEO_ID, DEFAULT_LOFI_TITLE } from "@/lib/constants";
 
@@ -49,7 +53,7 @@ export function MusicPlayer({
 }: MusicPlayerProps) {
     const musicPlayerRef = useRef<YTPlayer | null>(null);
     const [actualPlayerState, setActualPlayerState] = useState<number | null>(
-        null
+        null,
     );
 
     // Initialize default lofi track
@@ -112,8 +116,7 @@ export function MusicPlayer({
                                 ) {
                                     onUpdateMusicPlayer({ isPlaying: true });
                                 } else if (
-                                    event.data ===
-                                    window.YT.PlayerState.PAUSED
+                                    event.data === window.YT.PlayerState.PAUSED
                                 ) {
                                     onUpdateMusicPlayer({ isPlaying: false });
                                 } else if (
@@ -143,7 +146,7 @@ export function MusicPlayer({
             try {
                 if (typeof musicPlayerRef.current.setVolume === "function") {
                     musicPlayerRef.current.setVolume(
-                        musicPlayer.isMuted ? 0 : musicPlayer.volume
+                        musicPlayer.isMuted ? 0 : musicPlayer.volume,
                     );
                 }
             } catch {
@@ -154,12 +157,8 @@ export function MusicPlayer({
 
     // Update global controls when isPlaying changes
     useEffect(() => {
-        if (
-            typeof window !== "undefined" &&
-            window.musicPlayerControls
-        ) {
-            window.musicPlayerControls.isPlaying = () =>
-                musicPlayer.isPlaying;
+        if (typeof window !== "undefined" && window.musicPlayerControls) {
+            window.musicPlayerControls.isPlaying = () => musicPlayer.isPlaying;
         }
     }, [musicPlayer.isPlaying]);
 
@@ -197,7 +196,9 @@ export function MusicPlayer({
                     nextIndex = 0;
                 } else {
                     do {
-                        nextIndex = Math.floor(Math.random() * musicPlayer.playlist.length);
+                        nextIndex = Math.floor(
+                            Math.random() * musicPlayer.playlist.length,
+                        );
                     } while (nextIndex === musicPlayer.currentIndex);
                 }
             } else {
@@ -239,11 +240,18 @@ export function MusicPlayer({
 
     const playPreviousTrack = () => {
         if (musicPlayer.playlist.length > 0) {
-            let prevIndex = musicPlayer.currentIndex - 1;
-            if (prevIndex < 0) {
-                prevIndex = musicPlayer.repeat
-                    ? musicPlayer.playlist.length - 1
-                    : 0;
+            let prevIndex: number;
+            if (musicPlayer.shuffle && musicPlayer.playlist.length > 1) {
+                do {
+                    prevIndex = Math.floor(Math.random() * musicPlayer.playlist.length);
+                } while (prevIndex === musicPlayer.currentIndex);
+            } else {
+                prevIndex = musicPlayer.currentIndex - 1;
+                if (prevIndex < 0) {
+                    prevIndex = musicPlayer.repeat
+                        ? musicPlayer.playlist.length - 1
+                        : 0;
+                }
             }
 
             const prevTrack = musicPlayer.playlist[prevIndex];
@@ -507,7 +515,7 @@ export function MusicPlayer({
                                                 onClick={() =>
                                                     handlePlayTrack(
                                                         track,
-                                                        index
+                                                        index,
                                                     )
                                                 }
                                                 size="sm"
