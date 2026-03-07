@@ -1,9 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Play, Trash2, List } from "lucide-react";
 import type { CourseProgress } from "@/types";
 import { formatTime } from "@/utils/youtube";
@@ -19,6 +30,8 @@ export function CourseList({
     onSelectCourse,
     onDeleteCourse,
 }: CourseListProps) {
+    const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
+
     // Calculate playlist progress
     const getPlaylistProgress = (course: CourseProgress) => {
         if (!course.playlistId || !course.playlistProgress) {
@@ -160,7 +173,7 @@ export function CourseList({
                                         </Button>
                                         <Button
                                             onClick={() =>
-                                                onDeleteCourse(course.id)
+                                                setCourseToDelete(course.id)
                                             }
                                             variant="outline"
                                             size="sm"
@@ -177,6 +190,29 @@ export function CourseList({
                         No courses added yet
                     </p>
                 )}
+                <AlertDialog open={!!courseToDelete} onOpenChange={(open) => !open && setCourseToDelete(null)}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Course</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete this course and all its notes. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={() => {
+                                    if (courseToDelete) {
+                                        onDeleteCourse(courseToDelete);
+                                        setCourseToDelete(null);
+                                    }
+                                }}
+                            >
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardContent>
         </Card>
     );

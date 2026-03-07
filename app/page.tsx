@@ -18,6 +18,7 @@ import type {
     SessionData,
 } from "@/types";
 import { getYouTubeVideoId, getPlaylistId } from "@/utils/youtube";
+import { toast } from "sonner";
 import {
     STORAGE_KEY,
     OLD_STORAGE_KEY,
@@ -39,7 +40,7 @@ const DEFAULT_POMODORO: PomodoroSession = {
 const DEFAULT_MUSIC_PLAYER: MusicPlayerType = {
     currentTrack: null,
     playlist: [],
-    volume: 0,
+    volume: 50,
     isPlaying: false,
     isMuted: true,
     currentTime: 0,
@@ -50,8 +51,6 @@ const DEFAULT_MUSIC_PLAYER: MusicPlayerType = {
 
 const DEFAULT_SETTINGS = {
     autoMusicPause: true,
-    defaultWorkTime: DEFAULT_WORK_TIME,
-    defaultBreakTime: DEFAULT_BREAK_TIME,
 };
 
 export default function ZoneProApp() {
@@ -112,7 +111,16 @@ export default function ZoneProApp() {
             if (savedData) {
                 try {
                     const data: SessionData = JSON.parse(savedData);
-                    setCourses(data.courses || []);
+                    setCourses(
+                        (data.courses || []).map((course) => ({
+                            ...course,
+                            lastWatched: new Date(course.lastWatched),
+                            notes: (course.notes || []).map((note) => ({
+                                ...note,
+                                createdAt: new Date(note.createdAt),
+                            })),
+                        })),
+                    );
                     setPomodoro(data.pomodoro || DEFAULT_POMODORO);
                     setMusicPlayer(data.music || DEFAULT_MUSIC_PLAYER);
                     setSettings(data.settings || DEFAULT_SETTINGS);

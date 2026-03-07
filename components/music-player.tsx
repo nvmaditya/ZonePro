@@ -20,7 +20,7 @@ import {
     ChevronUp,
     ChevronDown,
 } from "lucide-react";
-import type { MusicPlayer as MusicPlayerType, MusicTrack } from "@/types";
+import type { MusicPlayer as MusicPlayerType, MusicTrack, YTPlayer } from "@/types";
 import { getYouTubeVideoId } from "@/utils/youtube";
 import { DEFAULT_LOFI_VIDEO_ID, DEFAULT_LOFI_TITLE } from "@/lib/constants";
 
@@ -47,7 +47,7 @@ export function MusicPlayer({
     onPlayTrack,
     onDeleteTrack,
 }: MusicPlayerProps) {
-    const musicPlayerRef = useRef<any>(null);
+    const musicPlayerRef = useRef<YTPlayer | null>(null);
     const [actualPlayerState, setActualPlayerState] = useState<number | null>(
         null
     );
@@ -92,7 +92,7 @@ export function MusicPlayer({
                         onReady: (event: any) => {
                             try {
                                 event.target.setVolume(musicPlayer.volume);
-                                (window as any).musicPlayerControls = {
+                                window.musicPlayerControls = {
                                     play: () => playMusic(),
                                     pause: () => pauseMusic(),
                                     isPlaying: () => musicPlayer.isPlaying,
@@ -135,7 +135,7 @@ export function MusicPlayer({
                 // Player creation error
             }
         }
-    }, [isYTReady, musicPlayer.volume, onUpdateMusicPlayer]);
+    }, [isYTReady]);
 
     // Update music player volume
     useEffect(() => {
@@ -156,9 +156,9 @@ export function MusicPlayer({
     useEffect(() => {
         if (
             typeof window !== "undefined" &&
-            (window as any).musicPlayerControls
+            window.musicPlayerControls
         ) {
-            (window as any).musicPlayerControls.isPlaying = () =>
+            window.musicPlayerControls.isPlaying = () =>
                 musicPlayer.isPlaying;
         }
     }, [musicPlayer.isPlaying]);
@@ -189,11 +189,24 @@ export function MusicPlayer({
 
     const playNextTrack = () => {
         if (musicPlayer.playlist.length > 0) {
-            let nextIndex = musicPlayer.currentIndex + 1;
-            if (nextIndex >= musicPlayer.playlist.length) {
-                nextIndex = musicPlayer.repeat
-                    ? 0
-                    : musicPlayer.playlist.length - 1;
+            let nextIndex: number;
+
+            if (musicPlayer.shuffle) {
+                // Pick a random index different from current
+                if (musicPlayer.playlist.length === 1) {
+                    nextIndex = 0;
+                } else {
+                    do {
+                        nextIndex = Math.floor(Math.random() * musicPlayer.playlist.length);
+                    } while (nextIndex === musicPlayer.currentIndex);
+                }
+            } else {
+                nextIndex = musicPlayer.currentIndex + 1;
+                if (nextIndex >= musicPlayer.playlist.length) {
+                    nextIndex = musicPlayer.repeat
+                        ? 0
+                        : musicPlayer.playlist.length - 1;
+                }
             }
 
             const nextTrack = musicPlayer.playlist[nextIndex];
