@@ -503,14 +503,14 @@ export function CoursePlayer({
                                                                               key={
                                                                                   note.id
                                                                               }
-                                                                              className="bg-muted/50 p-2 rounded"
+                                                                              className="bg-muted p-2 rounded"
                                                                           >
                                                                               <div className="flex items-start justify-between gap-2">
                                                                                   <div className="flex-1">
                                                                                       <div className="flex items-center gap-2 mb-1">
                                                                                           <Badge
                                                                                               variant="secondary"
-                                                                                              className="cursor-pointer hover:bg-accent text-xs"
+                                                                                              className="cursor-pointer hover:bg-primary/10 text-xs"
                                                                                               onClick={() =>
                                                                                                   handleNoteTimestampClick(
                                                                                                       note,
@@ -564,14 +564,14 @@ export function CoursePlayer({
                                                   .map((note) => (
                                                       <div
                                                           key={note.id}
-                                                          className="bg-muted/50 p-3 rounded-lg"
+                                                          className="bg-muted p-3 rounded-lg"
                                                       >
                                                           <div className="flex items-start justify-between gap-2">
                                                               <div className="flex-1">
                                                                   <div className="flex items-center gap-2 mb-1">
                                                                       <Badge
                                                                           variant="secondary"
-                                                                          className="cursor-pointer hover:bg-accent"
+                                                                          className="cursor-pointer hover:bg-primary/10"
                                                                           onClick={() =>
                                                                               jumpToTimestamp(
                                                                                   note.timestamp,

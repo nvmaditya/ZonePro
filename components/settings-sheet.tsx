@@ -204,7 +204,7 @@ export function SettingsSheet({
                         {/* Redesigned Save Button - Grayish initially, black when changed */}
                         <div className="pt-2">
                             {hasChanges && saveState === "idle" && (
-                                <p className="text-xs text-amber-600 mb-2 text-center font-medium">
+                                <p className="text-xs text-amber-600 dark:text-amber-400 mb-2 text-center font-medium">
                                     ● Unsaved changes
                                 </p>
                             )}
@@ -213,11 +213,11 @@ export function SettingsSheet({
                                 onClick={handleSaveAllSettings}
                                 className={`w-full transition-all duration-200 ${
                                     saveState === "saving"
-                                        ? "bg-primary hover:bg-primary/90"
+                                        ? "bg-foreground/80 hover:bg-foreground/90"
                                         : saveState === "saved"
-                                          ? "bg-green-600 hover:bg-green-700"
+                                          ? "bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600"
                                           : hasChanges
-                                            ? "bg-primary hover:bg-primary/90 shadow-md"
+                                            ? "bg-foreground hover:bg-foreground shadow-md"
                                             : "bg-muted text-muted-foreground cursor-not-allowed"
                                 }`}
                                 disabled={!hasChanges || saveState === "saving"}
@@ -259,7 +259,7 @@ export function SettingsSheet({
                             {/* Redesigned Export Button - Grayish style */}
                             <Button
                                 onClick={onExportSession}
-                                className="flex-1 bg-primary hover:bg-primary/90 transition-colors duration-200"
+                                className="flex-1 bg-foreground/80 hover:bg-foreground transition-colors duration-200"
                             >
                                 <Download className="w-4 h-4 mr-2" />
                                 Export Session
@@ -275,7 +275,7 @@ export function SettingsSheet({
                                 <Button
                                     asChild
                                     variant="outline"
-                                    className="w-full border-2 hover:bg-muted text-foreground transition-colors duration-200"
+                                    className="w-full border-2 hover:bg-accent text-foreground transition-colors duration-200"
                                 >
                                     <label
                                         htmlFor="import-session"

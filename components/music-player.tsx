@@ -359,7 +359,7 @@ export function MusicPlayer({
             </CardHeader>
             <CardContent className="space-y-4 pb-3">
                 {/* Music Player Controls */}
-                <div className="bg-muted/50 p-4 rounded-lg">
+                <div className="bg-muted p-4 rounded-lg">
                     <div className="text-center mb-3">
                         <h3 className="font-medium mb-1 truncate">
                             {musicPlayer.currentTrack?.title ||
@@ -502,8 +502,8 @@ export function MusicPlayer({
                                         key={track.id}
                                         className={`flex items-center justify-between p-2 rounded-md border ${
                                             musicPlayer.currentIndex === index
-                                                ? "bg-primary/10 border-primary/30"
-                                                : "hover:bg-muted/50"
+                                                ? "bg-primary/10 border-primary/20"
+                                                : "hover:bg-muted"
                                         }`}
                                     >
                                         <div className="flex-1 truncate mr-2">

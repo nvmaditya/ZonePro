@@ -9,6 +9,7 @@ import { YouTubePlaylist } from "@/components/youtube-playlist";
 import { SettingsSheet } from "@/components/settings-sheet";
 import { AddCourseDialog } from "@/components/add-course-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
 import { useYouTubeAPI } from "@/hooks/use-youtube-api";
 import { useCourses } from "@/hooks/use-courses";
 import { usePomodoro } from "@/hooks/use-pomodoro";
@@ -94,6 +95,7 @@ export default function ZoneProApp() {
 
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
+                        <UserMenu />
                         <SettingsSheet
                         settings={settings}
                         pomodoro={pomodoro}
