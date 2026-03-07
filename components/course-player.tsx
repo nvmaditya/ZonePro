@@ -14,7 +14,7 @@ interface CoursePlayerProps {
     currentCourse: CourseProgress | null;
     onCourseUpdate: (
         courseId: string,
-        updates: Partial<CourseProgress>
+        updates: Partial<CourseProgress>,
     ) => void;
     onAddCourse: () => void;
     isYTReady: boolean;
@@ -102,7 +102,7 @@ export function CoursePlayer({
                                 onReady: (event: { target: YTPlayer }) => {
                                     try {
                                         event.target.seekTo(
-                                            currentCourse.currentTime
+                                            currentCourse.currentTime,
                                         );
                                         setPlayerReady(true);
                                     } catch {
@@ -119,7 +119,7 @@ export function CoursePlayer({
                                     }
                                 },
                             },
-                        }
+                        },
                     );
                 } catch {
                     if (attempts < maxAttempts) {
@@ -151,12 +151,9 @@ export function CoursePlayer({
         if (playerReady && coursePlayerRef.current) {
             interval = setInterval(() => {
                 try {
-                    if (
-                        typeof coursePlayerRef.current.getCurrentTime ===
-                        "function"
-                    ) {
-                        const currentTime =
-                            coursePlayerRef.current.getCurrentTime();
+                    const player = coursePlayerRef.current;
+                    if (player && typeof player.getCurrentTime === "function") {
+                        const currentTime = player.getCurrentTime();
                         if (
                             typeof currentTime === "number" &&
                             !isNaN(currentTime)
@@ -207,7 +204,10 @@ export function CoursePlayer({
             else if (playerState === window.YT.PlayerState.PAUSED) {
                 updateCourseProgress();
 
-                if (settings.autoMusicPause && (musicWasPlaying || musicStateRef.current)) {
+                if (
+                    settings.autoMusicPause &&
+                    (musicWasPlaying || musicStateRef.current)
+                ) {
                     onMusicControl("play");
                 }
             }
@@ -215,7 +215,10 @@ export function CoursePlayer({
             else if (playerState === window.YT.PlayerState.ENDED) {
                 updateCourseProgress();
 
-                if (settings.autoMusicPause && (musicWasPlaying || musicStateRef.current)) {
+                if (
+                    settings.autoMusicPause &&
+                    (musicWasPlaying || musicStateRef.current)
+                ) {
                     onMusicControl("play");
                 }
             }
@@ -275,7 +278,7 @@ export function CoursePlayer({
     const deleteNote = (noteId: string) => {
         if (!currentCourse) return;
         const updatedNotes = (currentCourse.notes || []).filter(
-            (note) => note.id !== noteId
+            (note) => note.id !== noteId,
         );
         onCourseUpdate(currentCourse.id, { notes: updatedNotes });
     };
@@ -303,7 +306,10 @@ export function CoursePlayer({
             onCourseUpdate(currentCourse.id, {
                 videoId: note.videoId,
                 currentTime: note.timestamp,
-                playlistIndex: playlistIndex >= 0 ? playlistIndex : currentCourse.playlistIndex || 0,
+                playlistIndex:
+                    playlistIndex >= 0
+                        ? playlistIndex
+                        : currentCourse.playlistIndex || 0,
             });
             return;
         }
@@ -456,7 +462,7 @@ export function CoursePlayer({
                                                                   acc[videoId] =
                                                                       [];
                                                               acc[videoId].push(
-                                                                  note
+                                                                  note,
                                                               );
                                                               return acc;
                                                           },
@@ -464,11 +470,11 @@ export function CoursePlayer({
                                                               [
                                                                   key: string
                                                               ]: VideoNote[];
-                                                          }
+                                                          },
                                                       );
 
                                                   return Object.entries(
-                                                      notesByVideo
+                                                      notesByVideo,
                                                   ).map(([videoId, notes]) => (
                                                       <div
                                                           key={videoId}
@@ -487,11 +493,11 @@ export function CoursePlayer({
                                                                   .sort(
                                                                       (a, b) =>
                                                                           b.timestamp -
-                                                                          a.timestamp
+                                                                          a.timestamp,
                                                                   )
                                                                   .map(
                                                                       (
-                                                                          note
+                                                                          note,
                                                                       ) => (
                                                                           <div
                                                                               key={
@@ -506,18 +512,20 @@ export function CoursePlayer({
                                                                                               variant="secondary"
                                                                                               className="cursor-pointer hover:bg-blue-100 text-xs"
                                                                                               onClick={() =>
-                                                                                                  handleNoteTimestampClick(note)
+                                                                                                  handleNoteTimestampClick(
+                                                                                                      note,
+                                                                                                  )
                                                                                               }
                                                                                           >
                                                                                               {formatTime(
                                                                                                   Math.floor(
-                                                                                                      note.timestamp
-                                                                                                  )
+                                                                                                      note.timestamp,
+                                                                                                  ),
                                                                                               )}
                                                                                           </Badge>
                                                                                           <span className="text-xs text-gray-500">
                                                                                               {new Date(
-                                                                                                  note.createdAt
+                                                                                                  note.createdAt,
                                                                                               ).toLocaleDateString()}
                                                                                           </span>
                                                                                       </div>
@@ -530,7 +538,7 @@ export function CoursePlayer({
                                                                                   <Button
                                                                                       onClick={() =>
                                                                                           deleteNote(
-                                                                                              note.id
+                                                                                              note.id,
                                                                                           )
                                                                                       }
                                                                                       variant="ghost"
@@ -541,7 +549,7 @@ export function CoursePlayer({
                                                                                   </Button>
                                                                               </div>
                                                                           </div>
-                                                                      )
+                                                                      ),
                                                                   )}
                                                           </div>
                                                       </div>
@@ -551,7 +559,7 @@ export function CoursePlayer({
                                                   .sort(
                                                       (a, b) =>
                                                           b.timestamp -
-                                                          a.timestamp
+                                                          a.timestamp,
                                                   )
                                                   .map((note) => (
                                                       <div
@@ -566,19 +574,19 @@ export function CoursePlayer({
                                                                           className="cursor-pointer hover:bg-blue-100"
                                                                           onClick={() =>
                                                                               jumpToTimestamp(
-                                                                                  note.timestamp
+                                                                                  note.timestamp,
                                                                               )
                                                                           }
                                                                       >
                                                                           {formatTime(
                                                                               Math.floor(
-                                                                                  note.timestamp
-                                                                              )
+                                                                                  note.timestamp,
+                                                                              ),
                                                                           )}
                                                                       </Badge>
                                                                       <span className="text-xs text-gray-500">
                                                                           {new Date(
-                                                                              note.createdAt
+                                                                              note.createdAt,
                                                                           ).toLocaleDateString()}
                                                                       </span>
                                                                   </div>
@@ -591,7 +599,7 @@ export function CoursePlayer({
                                                               <Button
                                                                   onClick={() =>
                                                                       deleteNote(
-                                                                          note.id
+                                                                          note.id,
                                                                       )
                                                                   }
                                                                   variant="ghost"

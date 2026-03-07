@@ -314,11 +314,12 @@ export function MusicPlayer({
                 ) {
                     musicPlayerRef.current.loadVideoById(track.videoId);
                     setTimeout(() => {
+                        const player = musicPlayerRef.current;
                         if (
-                            typeof musicPlayerRef.current.playVideo ===
-                            "function"
+                            player &&
+                            typeof player.playVideo === "function"
                         ) {
-                            musicPlayerRef.current.playVideo();
+                            player.playVideo();
                         }
                     }, 100);
                 }
