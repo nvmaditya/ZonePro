@@ -359,7 +359,7 @@ export function MusicPlayer({
             </CardHeader>
             <CardContent className="space-y-4 pb-3">
                 {/* Music Player Controls */}
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="bg-muted/50 p-4 rounded-lg">
                     <div className="text-center mb-3">
                         <h3 className="font-medium mb-1 truncate">
                             {musicPlayer.currentTrack?.title ||
@@ -502,8 +502,8 @@ export function MusicPlayer({
                                         key={track.id}
                                         className={`flex items-center justify-between p-2 rounded-md border ${
                                             musicPlayer.currentIndex === index
-                                                ? "bg-blue-50 border-blue-200"
-                                                : "hover:bg-gray-50"
+                                                ? "bg-primary/10 border-primary/30"
+                                                : "hover:bg-muted/50"
                                         }`}
                                     >
                                         <div className="flex-1 truncate mr-2">
@@ -547,7 +547,7 @@ export function MusicPlayer({
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-sm text-gray-500 text-center py-2">
+                            <p className="text-sm text-muted-foreground text-center py-2">
                                 No tracks in queue
                             </p>
                         )}

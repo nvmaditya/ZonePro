@@ -120,7 +120,7 @@ export function CourseList({
                                         />
                                         {totalDuration > 0 ? (
                                             <div className="space-y-1">
-                                                <p className="text-sm text-gray-600">
+                                                <p className="text-sm text-muted-foreground">
                                                     {formatTime(
                                                         Math.floor(
                                                             totalWatched,
@@ -151,13 +151,13 @@ export function CourseList({
                                                 </p>
                                             </div>
                                         ) : (
-                                            <p className="text-sm text-gray-600">
+                                            <p className="text-sm text-muted-foreground">
                                                 {course.playlistId
                                                     ? "Playlist course - select video to start"
                                                     : "Ready to start"}
                                             </p>
                                         )}
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-muted-foreground">
                                             Last watched:{" "}
                                             {new Date(
                                                 course.lastWatched,
@@ -188,7 +188,7 @@ export function CourseList({
                         })}
                     </div>
                 ) : (
-                    <p className="text-gray-600 text-center py-8">
+                    <p className="text-muted-foreground text-center py-8">
                         No courses added yet
                     </p>
                 )}

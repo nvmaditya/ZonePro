@@ -158,7 +158,7 @@ export function SettingsSheet({
                                 step={5}
                                 className="mt-2"
                             />
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 {localSettings.workTime} minutes
                             </p>
                         </div>
@@ -177,7 +177,7 @@ export function SettingsSheet({
                                 step={5}
                                 className="mt-2"
                             />
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 {localSettings.breakTime} minutes
                             </p>
                         </div>
@@ -196,7 +196,7 @@ export function SettingsSheet({
                                 step={1}
                                 className="mt-2"
                             />
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 {localSettings.totalSessions} sessions
                             </p>
                         </div>
@@ -213,12 +213,12 @@ export function SettingsSheet({
                                 onClick={handleSaveAllSettings}
                                 className={`w-full transition-all duration-200 ${
                                     saveState === "saving"
-                                        ? "bg-gray-700 hover:bg-gray-800"
+                                        ? "bg-primary hover:bg-primary/90"
                                         : saveState === "saved"
                                           ? "bg-green-600 hover:bg-green-700"
                                           : hasChanges
-                                            ? "bg-gray-900 hover:bg-black shadow-md"
-                                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                            ? "bg-primary hover:bg-primary/90 shadow-md"
+                                            : "bg-muted text-muted-foreground cursor-not-allowed"
                                 }`}
                                 disabled={!hasChanges || saveState === "saving"}
                                 variant="default"
@@ -249,7 +249,7 @@ export function SettingsSheet({
                         <h3 className="text-lg font-medium">
                             Session Management
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                             Export your complete learning session including all
                             courses, timestamps, music playlists, notes, and
                             settings. Import to resume exactly where you left
@@ -259,7 +259,7 @@ export function SettingsSheet({
                             {/* Redesigned Export Button - Grayish style */}
                             <Button
                                 onClick={onExportSession}
-                                className="flex-1 bg-gray-700 hover:bg-gray-900 transition-colors duration-200"
+                                className="flex-1 bg-primary hover:bg-primary/90 transition-colors duration-200"
                             >
                                 <Download className="w-4 h-4 mr-2" />
                                 Export Session
@@ -275,7 +275,7 @@ export function SettingsSheet({
                                 <Button
                                     asChild
                                     variant="outline"
-                                    className="w-full border-2 hover:bg-gray-100 text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                                    className="w-full border-2 hover:bg-muted text-foreground transition-colors duration-200"
                                 >
                                     <label
                                         htmlFor="import-session"
@@ -293,12 +293,12 @@ export function SettingsSheet({
                             <Button
                                 onClick={() => setShowClearDataDialog(true)}
                                 variant="destructive"
-                                className="w-full bg-red-600 hover:bg-red-700"
+                                className="w-full bg-destructive hover:bg-destructive/90"
                             >
                                 <Trash2 className="w-4 h-4 mr-2" />
                                 Clear All Data
                             </Button>
-                            <p className="text-xs text-gray-500 mt-2 text-center">
+                            <p className="text-xs text-muted-foreground mt-2 text-center">
                                 This will delete all your courses, notes, and
                                 settings
                             </p>
@@ -312,19 +312,19 @@ export function SettingsSheet({
                             Current Session Stats
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="text-center p-4 bg-gray-100 rounded-lg border border-gray-200">
-                                <div className="text-2xl font-bold text-gray-800">
+                            <div className="text-center p-4 bg-muted rounded-lg border border-border">
+                                <div className="text-2xl font-bold text-foreground">
                                     {coursesCount}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-sm text-muted-foreground">
                                     Total Courses
                                 </div>
                             </div>
-                            <div className="text-center p-4 bg-gray-100 rounded-lg border border-gray-200">
-                                <div className="text-2xl font-bold text-gray-800">
+                            <div className="text-center p-4 bg-muted rounded-lg border border-border">
+                                <div className="text-2xl font-bold text-foreground">
                                     {musicTracksCount}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-sm text-muted-foreground">
                                     Music Tracks
                                 </div>
                             </div>
@@ -354,7 +354,7 @@ export function SettingsSheet({
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={clearAllData}
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                            className="bg-destructive hover:bg-destructive/90 text-white"
                         >
                             Yes, Delete Everything
                         </AlertDialogAction>

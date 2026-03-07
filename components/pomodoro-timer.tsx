@@ -25,7 +25,7 @@ export function PomodoroTimer({ pomodoro, onStart, onPause, onReset }: PomodoroT
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-center">
-          <div className="text-4xl font-mono font-bold text-blue-600 mb-2">{formatTime(pomodoro.timeLeft)}</div>
+          <div className="text-4xl font-mono font-bold text-primary mb-2">{formatTime(pomodoro.timeLeft)}</div>
           <Badge variant={pomodoro.isBreak ? "secondary" : "default"}>
             {pomodoro.isBreak ? "Break Time" : "Focus Time"}
           </Badge>
@@ -46,7 +46,7 @@ export function PomodoroTimer({ pomodoro, onStart, onPause, onReset }: PomodoroT
             Reset
           </Button>
         </div>
-        <div className="text-center text-sm text-gray-600">
+        <div className="text-center text-sm text-muted-foreground">
           Session {pomodoro.currentSession} of {pomodoro.totalSessions}
         </div>
       </CardContent>

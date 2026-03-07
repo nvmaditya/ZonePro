@@ -336,18 +336,18 @@ export function CoursePlayer({
                         </h3>
 
                         {!currentCourse.videoId && currentCourse.playlistId ? (
-                            <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                                 <div className="text-center p-8">
-                                    <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                    <h4 className="text-lg font-medium text-gray-700 mb-2">
+                                    <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                    <h4 className="text-lg font-medium text-foreground mb-2">
                                         Playlist Course
                                     </h4>
-                                    <p className="text-gray-600 mb-4">
+                                    <p className="text-muted-foreground mb-4">
                                         This is a playlist-based course. Select
                                         a video from the playlist in the sidebar
                                         to start learning.
                                     </p>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-muted-foreground">
                                         Playlist ID: {currentCourse.playlistId}
                                     </p>
                                 </div>
@@ -372,7 +372,7 @@ export function CoursePlayer({
                                 }
                                 className="flex-1 mr-4"
                             />
-                            <p className="text-sm text-gray-600 mr-4">
+                            <p className="text-sm text-muted-foreground mr-4">
                                 {formatTime(Math.floor(currentTimestamp))} /{" "}
                                 {formatTime(Math.floor(currentCourse.duration))}
                             </p>
@@ -433,7 +433,7 @@ export function CoursePlayer({
                                 </Button>
                             </div>
                             {playerReady && (
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-muted-foreground">
                                     Current time:{" "}
                                     {formatTime(Math.floor(currentTimestamp))}
                                 </p>
@@ -478,9 +478,9 @@ export function CoursePlayer({
                                                   ).map(([videoId, notes]) => (
                                                       <div
                                                           key={videoId}
-                                                          className="border rounded-lg p-3 bg-white"
+                                                          className="border rounded-lg p-3 bg-card"
                                                       >
-                                                          <h5 className="font-medium text-sm mb-2 text-blue-700">
+                                                          <h5 className="font-medium text-sm mb-2 text-primary">
                                                               {videoId ===
                                                               "general"
                                                                   ? "General Notes"
@@ -503,14 +503,14 @@ export function CoursePlayer({
                                                                               key={
                                                                                   note.id
                                                                               }
-                                                                              className="bg-gray-50 p-2 rounded"
+                                                                              className="bg-muted/50 p-2 rounded"
                                                                           >
                                                                               <div className="flex items-start justify-between gap-2">
                                                                                   <div className="flex-1">
                                                                                       <div className="flex items-center gap-2 mb-1">
                                                                                           <Badge
                                                                                               variant="secondary"
-                                                                                              className="cursor-pointer hover:bg-blue-100 text-xs"
+                                                                                              className="cursor-pointer hover:bg-accent text-xs"
                                                                                               onClick={() =>
                                                                                                   handleNoteTimestampClick(
                                                                                                       note,
@@ -523,7 +523,7 @@ export function CoursePlayer({
                                                                                                   ),
                                                                                               )}
                                                                                           </Badge>
-                                                                                          <span className="text-xs text-gray-500">
+                                                                                          <span className="text-xs text-muted-foreground">
                                                                                               {new Date(
                                                                                                   note.createdAt,
                                                                                               ).toLocaleDateString()}
@@ -543,7 +543,7 @@ export function CoursePlayer({
                                                                                       }
                                                                                       variant="ghost"
                                                                                       size="sm"
-                                                                                      className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                                                                                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                                                                                   >
                                                                                       <Trash2 className="w-3 h-3" />
                                                                                   </Button>
@@ -564,14 +564,14 @@ export function CoursePlayer({
                                                   .map((note) => (
                                                       <div
                                                           key={note.id}
-                                                          className="bg-gray-50 p-3 rounded-lg"
+                                                          className="bg-muted/50 p-3 rounded-lg"
                                                       >
                                                           <div className="flex items-start justify-between gap-2">
                                                               <div className="flex-1">
                                                                   <div className="flex items-center gap-2 mb-1">
                                                                       <Badge
                                                                           variant="secondary"
-                                                                          className="cursor-pointer hover:bg-blue-100"
+                                                                          className="cursor-pointer hover:bg-accent"
                                                                           onClick={() =>
                                                                               jumpToTimestamp(
                                                                                   note.timestamp,
@@ -584,7 +584,7 @@ export function CoursePlayer({
                                                                               ),
                                                                           )}
                                                                       </Badge>
-                                                                      <span className="text-xs text-gray-500">
+                                                                      <span className="text-xs text-muted-foreground">
                                                                           {new Date(
                                                                               note.createdAt,
                                                                           ).toLocaleDateString()}
@@ -604,7 +604,7 @@ export function CoursePlayer({
                                                                   }
                                                                   variant="ghost"
                                                                   size="sm"
-                                                                  className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                                                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                                                               >
                                                                   <Trash2 className="w-4 h-4" />
                                                               </Button>
@@ -617,8 +617,8 @@ export function CoursePlayer({
                     </div>
                 ) : (
                     <div className="text-center py-12">
-                        <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-600">
+                        <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">
                             No course selected. Add a course to get started!
                         </p>
                     </div>

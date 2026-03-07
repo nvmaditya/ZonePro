@@ -197,10 +197,10 @@ export function YouTubePlaylist({
                 {watchedVideos > 0 && (
                     <div className="mt-3 space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">
+                            <span className="text-muted-foreground">
                                 Overall Progress
                             </span>{" "}
-                            <span className="text-gray-600">
+                            <span className="text-muted-foreground">
                                 {videos.length > 0
                                     ? Math.round(
                                           (completedVideos / videos.length) *
@@ -218,7 +218,7 @@ export function YouTubePlaylist({
                             }
                             className="h-2"
                         />
-                        <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <span>
                                 {formatTime(Math.floor(totalWatchedTime))} /{" "}
                                 {formatTime(Math.floor(totalDuration))} watched
@@ -239,8 +239,8 @@ export function YouTubePlaylist({
                                     key={video.id}
                                     className={`flex items-start gap-3 p-2 rounded-lg border cursor-pointer transition-colors ${
                                         index === currentVideoIndex
-                                            ? "bg-blue-50 border-blue-200"
-                                            : "hover:bg-gray-50"
+                                            ? "bg-primary/10 border-primary/30"
+                                            : "hover:bg-muted/50"
                                     }`}
                                     onClick={() =>
                                         handleVideoClick(video, index)
@@ -260,7 +260,7 @@ export function YouTubePlaylist({
                                         <h4 className="font-medium text-sm line-clamp-2 leading-tight">
                                             {video.title}
                                         </h4>
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <p className="text-xs text-muted-foreground mt-1">
                                             {video.channelTitle}
                                         </p>
 
@@ -284,7 +284,7 @@ export function YouTubePlaylist({
                                                     className="h-1"
                                                 />
                                                 <div className="flex items-center justify-between mt-1">
-                                                    <span className="text-xs text-gray-500">
+                                                    <span className="text-xs text-muted-foreground">
                                                         {formatTime(
                                                             Math.floor(
                                                                 playlistProgress[
@@ -383,18 +383,18 @@ export function YouTubePlaylist({
                     </ScrollArea>
                 ) : loading ? (
                     <div className="text-center py-6">
-                        <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-gray-400" />
-                        <p className="text-xs text-gray-500">
+                        <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">
                             Loading videos...
                         </p>
                     </div>
                 ) : (
-                    <div className="text-center py-4 sm:py-6 text-gray-500">
-                        <List className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 text-gray-300" />
+                    <div className="text-center py-4 sm:py-6 text-muted-foreground">
+                        <List className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 text-muted-foreground/50" />
                         <p className="text-xs sm:text-sm">
                             No videos found in this playlist
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                             Check your API key or playlist URL
                         </p>
                     </div>

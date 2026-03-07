@@ -8,6 +8,7 @@ import { MusicPlayer } from "@/components/music-player";
 import { YouTubePlaylist } from "@/components/youtube-playlist";
 import { SettingsSheet } from "@/components/settings-sheet";
 import { AddCourseDialog } from "@/components/add-course-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useYouTubeAPI } from "@/hooks/use-youtube-api";
 import { useCourses } from "@/hooks/use-courses";
 import { usePomodoro } from "@/hooks/use-pomodoro";
@@ -70,7 +71,7 @@ export default function ZoneProApp() {
     );
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="min-h-screen bg-background p-4">
             {/* Hidden YouTube Players */}
             <div
                 style={{
@@ -85,13 +86,15 @@ export default function ZoneProApp() {
             <div className="max-w-7xl mx-auto">
                 <header className="flex justify-between items-center mb-8">
                     <div>
-                        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                        <h1 className="text-4xl font-bold text-foreground mb-2">
                             ZonePro
                         </h1>
-                        <p className="text-gray-600">Your Productivity Zone</p>
+                        <p className="text-muted-foreground">Your Productivity Zone</p>
                     </div>
 
-                    <SettingsSheet
+                    <div className="flex items-center gap-2">
+                        <ThemeToggle />
+                        <SettingsSheet
                         settings={settings}
                         pomodoro={pomodoro}
                         coursesCount={courses.length}
@@ -103,6 +106,7 @@ export default function ZoneProApp() {
                         onExportSession={exportSession}
                         onImportSession={importSession}
                     />
+                    </div>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
