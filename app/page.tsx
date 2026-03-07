@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
+import { CommandPalette } from "@/components/command-palette";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { LearnSection } from "@/components/sections/learn-section";
 import { TasksSection } from "@/components/sections/tasks-section";
 import { FocusSection } from "@/components/sections/focus-section";
@@ -24,6 +26,17 @@ const SECTION_TITLES: Record<string, string> = {
 
 export default function ZoneProApp() {
     const [activeSection, setActiveSection] = useState("learn");
+    const [commandOpen, setCommandOpen] = useState(false);
+
+    const handleQuickAddTask = useCallback(() => {
+        setActiveSection("tasks");
+    }, []);
+
+    useKeyboardShortcuts({
+        onCommandPalette: () => setCommandOpen(true),
+        onQuickAddTask: handleQuickAddTask,
+        onNavigate: setActiveSection,
+    });
 
     return (
         <SidebarProvider>
@@ -40,6 +53,13 @@ export default function ZoneProApp() {
                     {activeSection === "plan" && <PlanSection />}
                 </main>
             </SidebarInset>
+
+            <CommandPalette
+                open={commandOpen}
+                onOpenChange={setCommandOpen}
+                onNavigate={(section) => { setActiveSection(section); setCommandOpen(false); }}
+                onQuickAddTask={() => { handleQuickAddTask(); setCommandOpen(false); }}
+            />
         </SidebarProvider>
     );
 }

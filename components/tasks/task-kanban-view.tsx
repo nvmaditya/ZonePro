@@ -28,7 +28,13 @@ const COLUMNS: { status: TaskStatus; label: string; color: string }[] = [
     { status: "done", label: "Done", color: "bg-green-500/10" },
 ];
 
-export function TaskKanbanView({ tasksByStatus, onToggle, onMove, onDelete, onClick }: TaskKanbanViewProps) {
+export function TaskKanbanView({
+    tasksByStatus,
+    onToggle,
+    onMove,
+    onDelete,
+    onClick,
+}: TaskKanbanViewProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {COLUMNS.map(({ status, label, color }) => (
@@ -41,7 +47,7 @@ export function TaskKanbanView({ tasksByStatus, onToggle, onMove, onDelete, onCl
                     </h3>
                     <ScrollArea className="h-[calc(100vh-20rem)]">
                         <div className="space-y-2">
-                            {(tasksByStatus[status] || []).map(task => (
+                            {(tasksByStatus[status] || []).map((task) => (
                                 <ContextMenu key={task.id}>
                                     <ContextMenuTrigger>
                                         <Card
@@ -50,31 +56,62 @@ export function TaskKanbanView({ tasksByStatus, onToggle, onMove, onDelete, onCl
                                         >
                                             <CardContent className="p-3">
                                                 <div className="flex items-start gap-2">
-                                                    <div onClick={(e) => e.stopPropagation()}>
+                                                    <div
+                                                        onClick={(e) =>
+                                                            e.stopPropagation()
+                                                        }
+                                                    >
                                                         <Checkbox
-                                                            checked={task.status === "done"}
-                                                            onCheckedChange={() => onToggle(task.id)}
+                                                            checked={
+                                                                task.status ===
+                                                                "done"
+                                                            }
+                                                            onCheckedChange={() =>
+                                                                onToggle(
+                                                                    task.id,
+                                                                )
+                                                            }
                                                             className="mt-0.5"
                                                         />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className={`text-sm ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}>
+                                                        <p
+                                                            className={`text-sm ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}
+                                                        >
                                                             {task.title}
                                                         </p>
                                                         <div className="flex flex-wrap items-center gap-1 mt-1.5">
-                                                            {task.priority !== "none" && (
-                                                                <Badge className={`text-xs px-1 py-0 ${PRIORITY_CONFIG[task.priority].color}`}>
-                                                                    {PRIORITY_CONFIG[task.priority].label}
+                                                            {task.priority !==
+                                                                "none" && (
+                                                                <Badge
+                                                                    className={`text-xs px-1 py-0 ${PRIORITY_CONFIG[task.priority].color}`}
+                                                                >
+                                                                    {
+                                                                        PRIORITY_CONFIG[
+                                                                            task
+                                                                                .priority
+                                                                        ].label
+                                                                    }
                                                                 </Badge>
                                                             )}
-                                                            {task.labels.map(label => (
-                                                                <Badge key={label} variant="outline" className="text-xs px-1 py-0">
-                                                                    {label}
-                                                                </Badge>
-                                                            ))}
+                                                            {task.labels.map(
+                                                                (label) => (
+                                                                    <Badge
+                                                                        key={
+                                                                            label
+                                                                        }
+                                                                        variant="outline"
+                                                                        className="text-xs px-1 py-0"
+                                                                    >
+                                                                        {label}
+                                                                    </Badge>
+                                                                ),
+                                                            )}
                                                             {task.dueDate && (
                                                                 <span className="text-xs text-muted-foreground">
-                                                                    {formatShortDate(task.dueDate)}
+                                                                    {formatShortDate(
+                                                                        task.dueDate,
+                                                                    )}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -84,8 +121,15 @@ export function TaskKanbanView({ tasksByStatus, onToggle, onMove, onDelete, onCl
                                         </Card>
                                     </ContextMenuTrigger>
                                     <ContextMenuContent>
-                                        {COLUMNS.filter(c => c.status !== status).map(c => (
-                                            <ContextMenuItem key={c.status} onClick={() => onMove(task.id, c.status)}>
+                                        {COLUMNS.filter(
+                                            (c) => c.status !== status,
+                                        ).map((c) => (
+                                            <ContextMenuItem
+                                                key={c.status}
+                                                onClick={() =>
+                                                    onMove(task.id, c.status)
+                                                }
+                                            >
                                                 Move to {c.label}
                                             </ContextMenuItem>
                                         ))}
