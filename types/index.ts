@@ -110,6 +110,146 @@ export interface YTPlayerConfig {
     };
 }
 
+// ============ TASK MANAGEMENT ============
+
+export type TaskPriority = "urgent" | "high" | "medium" | "low" | "none";
+export type TaskStatus = "todo" | "in_progress" | "done" | "cancelled";
+
+export interface Task {
+    id: string;
+    title: string;
+    description?: string;
+    status: TaskStatus;
+    priority: TaskPriority;
+    labels: string[];
+    dueDate?: string;
+    parentId?: string;
+    dependsOn?: string[];
+    linkedNoteIds?: string[];
+    linkedFocusSessionIds?: string[];
+    recurrence?: TaskRecurrence | null;
+    estimatedMinutes?: number;
+    actualMinutes?: number;
+    sortOrder: number;
+    createdAt: string;
+    completedAt?: string;
+    updatedAt: string;
+}
+
+export interface TaskRecurrence {
+    frequency: "daily" | "weekly" | "monthly" | "custom";
+    interval: number;
+    daysOfWeek?: number[];
+    nextDue?: string;
+}
+
+// ============ FOCUS & TIME ============
+
+export interface FocusSession {
+    id: string;
+    taskId?: string;
+    type: "pomodoro" | "stopwatch" | "timeblock";
+    startedAt: string;
+    endedAt?: string;
+    plannedMinutes: number;
+    actualMinutes: number;
+    completed: boolean;
+    notes?: string;
+    date: string;
+}
+
+export interface DailyTimeBudget {
+    date: string;
+    budgetMinutes: number;
+    actualMinutes: number;
+}
+
+// ============ HABITS ============
+
+export interface Habit {
+    id: string;
+    title: string;
+    description?: string;
+    frequency: "daily" | "weekly" | "custom";
+    targetDays?: number[];
+    targetCount: number;
+    color: string;
+    icon?: string;
+    createdAt: string;
+    archivedAt?: string;
+    sortOrder: number;
+}
+
+export interface HabitLog {
+    id: string;
+    habitId: string;
+    date: string;
+    count: number;
+    note?: string;
+}
+
+// ============ NOTES ============
+
+export interface Note {
+    id: string;
+    title: string;
+    content: string;
+    tags: string[];
+    isPinned: boolean;
+    isArchived: boolean;
+    linkedTaskIds?: string[];
+    linkedCourseId?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+// ============ PLANNING ============
+
+export interface Goal {
+    id: string;
+    title: string;
+    description?: string;
+    targetDate?: string;
+    milestones: Milestone[];
+    status: "active" | "completed" | "abandoned";
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Milestone {
+    id: string;
+    title: string;
+    completed: boolean;
+    linkedTaskIds?: string[];
+    sortOrder: number;
+}
+
+export interface DailyPriority {
+    date: string;
+    taskIds: string[];
+}
+
+export interface TimeBlock {
+    id: string;
+    date: string;
+    startHour: number;
+    startMinute: number;
+    durationMinutes: number;
+    title: string;
+    taskId?: string;
+    color?: string;
+}
+
+// ============ APP SETTINGS ============
+
+export interface AppSettings {
+    autoMusicPause: boolean;
+    defaultView: string;
+    taskDefaultView: "list" | "kanban" | "calendar";
+    dailyTimeBudgetMinutes: number;
+    weekStartsOn: 0 | 1;
+}
+
 declare global {
     interface Window {
         YT: {

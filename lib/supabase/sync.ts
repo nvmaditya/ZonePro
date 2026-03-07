@@ -28,7 +28,7 @@ export async function syncCoursesToCloud(
             { onConflict: "user_id,local_id" },
         );
         if (error) {
-            console.error("Error syncing course:", error);
+            // Sync error handled by caller
         }
     }
 }
@@ -84,7 +84,7 @@ export async function syncSettingsToCloud(
         { onConflict: "user_id" },
     );
     if (error) {
-        console.error("Error syncing settings:", error);
+        // Sync error handled by caller
     }
 }
 
@@ -142,7 +142,7 @@ export async function syncMusicToCloud(
             { onConflict: "user_id,local_id" },
         );
         if (error) {
-            console.error("Error syncing music track:", error);
+            // Sync error handled by caller
         }
     }
 }

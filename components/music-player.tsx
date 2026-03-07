@@ -24,6 +24,7 @@ import type {
     MusicPlayer as MusicPlayerType,
     MusicTrack,
     YTPlayer,
+    YTPlayerEvent,
 } from "@/types";
 import { getYouTubeVideoId } from "@/utils/youtube";
 import { DEFAULT_LOFI_VIDEO_ID, DEFAULT_LOFI_TITLE } from "@/lib/constants";
@@ -52,13 +53,15 @@ export function MusicPlayer({
     onDeleteTrack,
 }: MusicPlayerProps) {
     const musicPlayerRef = useRef<YTPlayer | null>(null);
+    const defaultInitRef = useRef(false);
     const [actualPlayerState, setActualPlayerState] = useState<number | null>(
         null,
     );
 
-    // Initialize default lofi track
+    // Initialize default lofi track (only once)
     useEffect(() => {
-        if (musicPlayer.playlist.length === 0) {
+        if (musicPlayer.playlist.length === 0 && !defaultInitRef.current) {
+            defaultInitRef.current = true;
             const lofiTrack: MusicTrack = {
                 id: "default-lofi",
                 title: DEFAULT_LOFI_TITLE,
@@ -93,7 +96,7 @@ export function MusicPlayer({
                         playlist: DEFAULT_LOFI_VIDEO_ID,
                     },
                     events: {
-                        onReady: (event: any) => {
+                        onReady: (event: YTPlayerEvent) => {
                             try {
                                 event.target.setVolume(musicPlayer.volume);
                                 window.musicPlayerControls = {
@@ -105,7 +108,7 @@ export function MusicPlayer({
                                 // Player setup error
                             }
                         },
-                        onStateChange: (event: any) => {
+                        onStateChange: (event: YTPlayerEvent) => {
                             try {
                                 if (typeof window === "undefined") return;
 
@@ -222,14 +225,8 @@ export function MusicPlayer({
                         typeof musicPlayerRef.current.loadVideoById ===
                         "function"
                     ) {
+                        // loadVideoById auto-plays the video
                         musicPlayerRef.current.loadVideoById(nextTrack.videoId);
-                        if (
-                            musicPlayer.isPlaying &&
-                            typeof musicPlayerRef.current.playVideo ===
-                                "function"
-                        ) {
-                            musicPlayerRef.current.playVideo();
-                        }
                     }
                 } catch {
                     // Next track error
@@ -266,14 +263,8 @@ export function MusicPlayer({
                         typeof musicPlayerRef.current.loadVideoById ===
                         "function"
                     ) {
+                        // loadVideoById auto-plays the video
                         musicPlayerRef.current.loadVideoById(prevTrack.videoId);
-                        if (
-                            musicPlayer.isPlaying &&
-                            typeof musicPlayerRef.current.playVideo ===
-                                "function"
-                        ) {
-                            musicPlayerRef.current.playVideo();
-                        }
                     }
                 } catch {
                     // Previous track error
@@ -312,16 +303,8 @@ export function MusicPlayer({
                 if (
                     typeof musicPlayerRef.current.loadVideoById === "function"
                 ) {
+                    // loadVideoById auto-plays the video, no need for setTimeout
                     musicPlayerRef.current.loadVideoById(track.videoId);
-                    setTimeout(() => {
-                        const player = musicPlayerRef.current;
-                        if (
-                            player &&
-                            typeof player.playVideo === "function"
-                        ) {
-                            player.playVideo();
-                        }
-                    }, 100);
                 }
             } catch {
                 // Track play error
