@@ -15,6 +15,8 @@ import { useCourses } from "@/hooks/use-courses";
 import { usePomodoro } from "@/hooks/use-pomodoro";
 import { useMusicPlayer } from "@/hooks/use-music-player";
 import { useSessionPersistence } from "@/hooks/use-session-persistence";
+import { useCloudSync } from "@/hooks/use-cloud-sync";
+import { SyncStatusIndicator } from "@/components/sync-status";
 
 export default function ZoneProApp() {
     const { isYTReady } = useYouTubeAPI();
@@ -60,7 +62,7 @@ export default function ZoneProApp() {
     const [newMusicUrl, setNewMusicUrl] = useState("");
     const [showMusicQueue, setShowMusicQueue] = useState(false);
 
-    const { exportSession, importSession } = useSessionPersistence(
+    const { isLoaded, exportSession, importSession } = useSessionPersistence(
         { courses, pomodoro, musicPlayer, settings },
         {
             setCourses,
@@ -69,6 +71,12 @@ export default function ZoneProApp() {
             setMusicPlayer,
             setSettings,
         },
+    );
+
+    const { syncStatus } = useCloudSync(
+        { courses, pomodoro, musicPlayer, settings },
+        { setCourses, setPomodoro, setMusicPlayer, setSettings },
+        isLoaded,
     );
 
     return (
@@ -94,6 +102,7 @@ export default function ZoneProApp() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <SyncStatusIndicator status={syncStatus} />
                         <ThemeToggle />
                         <UserMenu />
                         <SettingsSheet
