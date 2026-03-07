@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Plus, StickyNote, Trash2 } from "lucide-react";
-import type { CourseProgress, VideoNote, PlaylistVideoProgress } from "@/types";
+import type { CourseProgress, VideoNote } from "@/types";
 import { formatTime } from "@/utils/youtube";
 
 interface CoursePlayerProps {
@@ -38,7 +38,6 @@ export function CoursePlayer({
     const [playerReady, setPlayerReady] = useState(false);
     const [newNote, setNewNote] = useState("");
     const [currentTimestamp, setCurrentTimestamp] = useState(0);
-    // Add internal music state tracking
     const musicStateRef = useRef<boolean>(false);
 
     // Reset player ready state when course changes
@@ -47,56 +46,38 @@ export function CoursePlayer({
     }, [currentCourse?.id]);
 
     useEffect(() => {
-        // Only proceed if YouTube API is ready and we have a current course
         if (isYTReady && window.YT && currentCourse) {
             let attempts = 0;
             const maxAttempts = 3;
 
             const initPlayer = () => {
-                // Safety cleanup for existing player
                 if (coursePlayerRef.current) {
                     try {
                         coursePlayerRef.current.destroy();
-                    } catch (error) {
-                        console.warn("Error destroying player:", error);
+                    } catch {
+                        // Player cleanup error
                     }
                     coursePlayerRef.current = null;
                 }
 
-                // Wait for DOM element to be available
                 const container = document.getElementById("course-player");
                 if (!container) {
-                    // If container not found, retry after a short delay
                     if (attempts < maxAttempts) {
                         attempts++;
                         setTimeout(initPlayer, 100);
-                    } else {
-                        console.error(
-                            "Course player container not found after maximum attempts"
-                        );
                     }
                     return;
                 }
 
-                // Clear container and create new element
                 container.innerHTML = "";
                 const playerDiv = document.createElement("div");
                 playerDiv.id = "course-player-iframe";
                 container.appendChild(playerDiv);
 
                 try {
-                    // For playlist-only courses, we need to get the first video ID
                     let videoIdToPlay = currentCourse.videoId;
 
-                    // If no video ID but has playlist ID, we'll need to handle this differently
                     if (!videoIdToPlay && currentCourse.playlistId) {
-                        // For now, show a message that playlist support is coming
-                        // In a full implementation, you'd fetch the first video from the playlist
-                        console.log(
-                            "Playlist-only course detected, playlist ID:",
-                            currentCourse.playlistId
-                        );
-                        // We'll handle this case below by showing a different UI
                         return;
                     }
 
@@ -115,7 +96,7 @@ export function CoursePlayer({
                                 origin: window.location.origin,
                                 playsinline: 1,
                                 modestbranding: 1,
-                                iv_load_policy: 3, // Hide annotations
+                                iv_load_policy: 3,
                             },
                             events: {
                                 onReady: (event: any) => {
@@ -124,23 +105,14 @@ export function CoursePlayer({
                                             currentCourse.currentTime
                                         );
                                         setPlayerReady(true);
-                                        console.log("YouTube player ready");
-                                    } catch (error) {
-                                        console.warn(
-                                            "Error during onReady:",
-                                            error
-                                        );
+                                    } catch {
+                                        // onReady error
                                     }
                                 },
                                 onStateChange: (event: any) => {
                                     handlePlayerStateChange(event.data);
                                 },
-                                onError: (event: any) => {
-                                    console.error(
-                                        "YouTube player error:",
-                                        event.data
-                                    );
-                                    // Retry initialization on error
+                                onError: () => {
                                     if (attempts < maxAttempts) {
                                         attempts++;
                                         setTimeout(initPlayer, 1000);
@@ -149,8 +121,7 @@ export function CoursePlayer({
                             },
                         }
                     );
-                } catch (error) {
-                    console.error("Error initializing YouTube player:", error);
+                } catch {
                     if (attempts < maxAttempts) {
                         attempts++;
                         setTimeout(initPlayer, 1000);
@@ -158,19 +129,14 @@ export function CoursePlayer({
                 }
             };
 
-            // Start player initialization with a small delay to ensure DOM is ready
             setTimeout(initPlayer, 100);
 
-            // Cleanup function
             return () => {
                 if (coursePlayerRef.current) {
                     try {
                         coursePlayerRef.current.destroy();
-                    } catch (error) {
-                        console.warn(
-                            "Error destroying player on cleanup:",
-                            error
-                        );
+                    } catch {
+                        // Cleanup error
                     }
                     coursePlayerRef.current = null;
                 }
@@ -198,8 +164,8 @@ export function CoursePlayer({
                             setCurrentTimestamp(currentTime);
                         }
                     }
-                } catch (error) {
-                    // Silently handle errors to avoid console spam
+                } catch {
+                    // Silently handle errors
                 }
             }, 1000);
         }
@@ -214,38 +180,34 @@ export function CoursePlayer({
     const handlePlayerStateChange = (playerState: number) => {
         if (!currentCourse || !coursePlayerRef.current) return;
 
-        console.log("Player state changed:", playerState);
-
         try {
-            // When video starts playing - always pause music
+            // When video starts playing - pause music if autoMusicPause is enabled
             if (playerState === window.YT.PlayerState.PLAYING) {
-                try {
-                    const musicControls = (window as any).musicPlayerControls;
-                    if (
-                        musicControls &&
-                        typeof musicControls.isPlaying === "function"
-                    ) {
-                        const isPlaying = musicControls.isPlaying();
-                        setMusicWasPlaying(isPlaying);
-                        musicStateRef.current = isPlaying;
+                if (settings.autoMusicPause) {
+                    try {
+                        const musicControls = (window as any).musicPlayerControls;
+                        if (
+                            musicControls &&
+                            typeof musicControls.isPlaying === "function"
+                        ) {
+                            const isPlaying = musicControls.isPlaying();
+                            setMusicWasPlaying(isPlaying);
+                            musicStateRef.current = isPlaying;
 
-                        if (isPlaying) {
-                            console.log(
-                                "Auto-pausing music - video started playing"
-                            );
-                            onMusicControl("pause");
+                            if (isPlaying) {
+                                onMusicControl("pause");
+                            }
                         }
+                    } catch {
+                        // Music control error
                     }
-                } catch (error) {
-                    console.warn("Error with music controls:", error);
                 }
             }
             // When video is paused - resume music if it was playing
             else if (playerState === window.YT.PlayerState.PAUSED) {
                 updateCourseProgress();
 
-                if (musicWasPlaying || musicStateRef.current) {
-                    console.log("Auto-resuming music - video paused");
+                if (settings.autoMusicPause && (musicWasPlaying || musicStateRef.current)) {
                     onMusicControl("play");
                 }
             }
@@ -253,13 +215,12 @@ export function CoursePlayer({
             else if (playerState === window.YT.PlayerState.ENDED) {
                 updateCourseProgress();
 
-                if (musicWasPlaying || musicStateRef.current) {
-                    console.log("Auto-resuming music - video ended");
+                if (settings.autoMusicPause && (musicWasPlaying || musicStateRef.current)) {
                     onMusicControl("play");
                 }
             }
-        } catch (error) {
-            console.warn("Error in player state change handler:", error);
+        } catch {
+            // State change handler error
         }
     };
 
@@ -267,7 +228,6 @@ export function CoursePlayer({
         if (!coursePlayerRef.current || !currentCourse) return;
 
         try {
-            // Check if the player methods are available
             if (
                 typeof coursePlayerRef.current.getCurrentTime === "function" &&
                 typeof coursePlayerRef.current.getDuration === "function"
@@ -275,7 +235,6 @@ export function CoursePlayer({
                 const currentTime = coursePlayerRef.current.getCurrentTime();
                 const duration = coursePlayerRef.current.getDuration();
 
-                // Only update if we have valid values
                 if (
                     typeof currentTime === "number" &&
                     typeof duration === "number" &&
@@ -288,7 +247,6 @@ export function CoursePlayer({
                         lastWatched: new Date(),
                     };
 
-                    // If this is a playlist course, also update the playlist progress
                     if (currentCourse.playlistId && currentCourse.videoId) {
                         const playlistProgress = {
                             ...currentCourse.playlistProgress,
@@ -296,7 +254,7 @@ export function CoursePlayer({
                                 videoId: currentCourse.videoId,
                                 currentTime,
                                 duration,
-                                completed: currentTime / duration > 0.9, // Consider completed if 90% watched
+                                completed: currentTime / duration > 0.9,
                                 lastWatched: new Date(),
                                 title: `Video ${
                                     (currentCourse.playlistIndex || 0) + 1
@@ -309,28 +267,8 @@ export function CoursePlayer({
                     onCourseUpdate(currentCourse.id, updates);
                 }
             }
-        } catch (error) {
-            console.warn("Error updating course progress:", error);
-        }
-    };
-
-    const getCurrentTime = () => {
-        if (!coursePlayerRef.current || !playerReady) return 0;
-        try {
-            return coursePlayerRef.current.getCurrentTime() || 0;
-        } catch (error) {
-            console.warn("Error getting current time:", error);
-            return 0;
-        }
-    };
-
-    const getPlayerState = () => {
-        if (!coursePlayerRef.current || !playerReady) return null;
-        try {
-            return coursePlayerRef.current.getPlayerState();
-        } catch (error) {
-            console.warn("Error getting player state:", error);
-            return null;
+        } catch {
+            // Progress update error
         }
     };
 
@@ -346,9 +284,30 @@ export function CoursePlayer({
         if (!coursePlayerRef.current || !playerReady) return;
         try {
             coursePlayerRef.current.seekTo(timestamp);
-        } catch (error) {
-            console.warn("Error seeking to timestamp:", error);
+        } catch {
+            // Seek error
         }
+    };
+
+    const handleNoteTimestampClick = (note: VideoNote) => {
+        if (
+            note.videoId &&
+            currentCourse &&
+            note.videoId !== currentCourse.videoId
+        ) {
+            // Switch to the correct video first
+            const playlistProgress = currentCourse.playlistProgress || {};
+            const videoKeys = Object.keys(playlistProgress);
+            const playlistIndex = videoKeys.indexOf(note.videoId);
+
+            onCourseUpdate(currentCourse.id, {
+                videoId: note.videoId,
+                currentTime: note.timestamp,
+                playlistIndex: playlistIndex >= 0 ? playlistIndex : currentCourse.playlistIndex || 0,
+            });
+            return;
+        }
+        jumpToTimestamp(note.timestamp);
     };
 
     return (
@@ -370,7 +329,6 @@ export function CoursePlayer({
                             {currentCourse.title}
                         </h3>
 
-                        {/* Show different UI for playlist-only courses vs individual videos */}
                         {!currentCourse.videoId && currentCourse.playlistId ? (
                             <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
                                 <div className="text-center p-8">
@@ -487,8 +445,7 @@ export function CoursePlayer({
                                     </h4>
                                     <div className="space-y-3">
                                         {currentCourse.playlistId
-                                            ? // For playlist courses, group notes by video
-                                              (() => {
+                                            ? (() => {
                                                   const notesByVideo =
                                                       currentCourse.notes.reduce(
                                                           (acc, note) => {
@@ -548,23 +505,9 @@ export function CoursePlayer({
                                                                                           <Badge
                                                                                               variant="secondary"
                                                                                               className="cursor-pointer hover:bg-blue-100 text-xs"
-                                                                                              onClick={() => {
-                                                                                                  // For playlist notes, need to switch to the video first
-                                                                                                  if (
-                                                                                                      note.videoId &&
-                                                                                                      note.videoId !==
-                                                                                                          currentCourse.videoId
-                                                                                                  ) {
-                                                                                                      // TODO: Add logic to switch video
-                                                                                                      console.log(
-                                                                                                          "Switch to video:",
-                                                                                                          note.videoId
-                                                                                                      );
-                                                                                                  }
-                                                                                                  jumpToTimestamp(
-                                                                                                      note.timestamp
-                                                                                                  );
-                                                                                              }}
+                                                                                              onClick={() =>
+                                                                                                  handleNoteTimestampClick(note)
+                                                                                              }
                                                                                           >
                                                                                               {formatTime(
                                                                                                   Math.floor(
@@ -604,8 +547,7 @@ export function CoursePlayer({
                                                       </div>
                                                   ));
                                               })()
-                                            : // For single video courses, show notes normally
-                                              currentCourse.notes
+                                            : currentCourse.notes
                                                   .sort(
                                                       (a, b) =>
                                                           b.timestamp -

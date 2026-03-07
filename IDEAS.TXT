@@ -1,3 +1,0 @@
-1. On click play it will load the iframe
-2. playlist progress.(json load the playlist data)
-3. 

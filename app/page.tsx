@@ -18,11 +18,46 @@ import type {
     SessionData,
 } from "@/types";
 import { getYouTubeVideoId, getPlaylistId } from "@/utils/youtube";
+import {
+    STORAGE_KEY,
+    OLD_STORAGE_KEY,
+    DEFAULT_WORK_TIME,
+    DEFAULT_BREAK_TIME,
+    DEFAULT_TOTAL_SESSIONS,
+} from "@/lib/constants";
 
-export default function FocusedLearningApp() {
+const DEFAULT_POMODORO: PomodoroSession = {
+    workTime: DEFAULT_WORK_TIME,
+    breakTime: DEFAULT_BREAK_TIME,
+    currentSession: 1,
+    totalSessions: DEFAULT_TOTAL_SESSIONS,
+    isActive: false,
+    isBreak: false,
+    timeLeft: DEFAULT_WORK_TIME * 60,
+};
+
+const DEFAULT_MUSIC_PLAYER: MusicPlayerType = {
+    currentTrack: null,
+    playlist: [],
+    volume: 0,
+    isPlaying: false,
+    isMuted: true,
+    currentTime: 0,
+    shuffle: false,
+    repeat: false,
+    currentIndex: 0,
+};
+
+const DEFAULT_SETTINGS = {
+    autoMusicPause: true,
+    defaultWorkTime: DEFAULT_WORK_TIME,
+    defaultBreakTime: DEFAULT_BREAK_TIME,
+};
+
+export default function ZoneProApp() {
     const [courses, setCourses] = useState<CourseProgress[]>([]);
     const [currentCourse, setCurrentCourse] = useState<CourseProgress | null>(
-        null
+        null,
     );
     const [newCourseUrl, setNewCourseUrl] = useState("");
     const [newCourseTitle, setNewCourseTitle] = useState("");
@@ -31,37 +66,17 @@ export default function FocusedLearningApp() {
     const [showAddCourse, setShowAddCourse] = useState(false);
     const [isYTReady, setIsYTReady] = useState(false);
     const [musicWasPlaying, setMusicWasPlaying] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
 
     // Pomodoro Timer State
-    const [pomodoro, setPomodoro] = useState<PomodoroSession>({
-        workTime: 25,
-        breakTime: 5,
-        currentSession: 1,
-        totalSessions: 4,
-        isActive: false,
-        isBreak: false,
-        timeLeft: 25 * 60,
-    });
+    const [pomodoro, setPomodoro] = useState<PomodoroSession>(DEFAULT_POMODORO);
 
     // Music Player State - turned off by default
-    const [musicPlayer, setMusicPlayer] = useState<MusicPlayerType>({
-        currentTrack: null,
-        playlist: [],
-        volume: 0,
-        isPlaying: false,
-        isMuted: true,
-        currentTime: 0,
-        shuffle: false,
-        repeat: false,
-        currentIndex: 0,
-    });
+    const [musicPlayer, setMusicPlayer] =
+        useState<MusicPlayerType>(DEFAULT_MUSIC_PLAYER);
 
     // Settings
-    const [settings, setSettings] = useState({
-        autoMusicPause: true,
-        defaultWorkTime: 25,
-        defaultBreakTime: 5,
-    });
+    const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
     // Initialize YouTube API
     useEffect(() => {
@@ -72,7 +87,6 @@ export default function FocusedLearningApp() {
             firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
             window.onYouTubeIframeAPIReady = () => {
-                console.log("YouTube API ready");
                 setIsYTReady(true);
             };
         } else if (typeof window !== "undefined") {
@@ -80,54 +94,39 @@ export default function FocusedLearningApp() {
         }
     }, []);
 
-    // Load data from localStorage on mount
+    // Load data from localStorage on mount (with migration from old key)
     useEffect(() => {
         if (typeof window !== "undefined") {
-            const savedData = localStorage.getItem("focusedLearningData");
+            let savedData = localStorage.getItem(STORAGE_KEY);
+
+            // Migrate from old storage key if new key has no data
+            if (!savedData) {
+                const oldData = localStorage.getItem(OLD_STORAGE_KEY);
+                if (oldData) {
+                    savedData = oldData;
+                    localStorage.setItem(STORAGE_KEY, oldData);
+                    localStorage.removeItem(OLD_STORAGE_KEY);
+                }
+            }
+
             if (savedData) {
                 try {
                     const data: SessionData = JSON.parse(savedData);
                     setCourses(data.courses || []);
-                    setPomodoro(
-                        data.pomodoro || {
-                            workTime: 25,
-                            breakTime: 5,
-                            currentSession: 1,
-                            totalSessions: 4,
-                            isActive: false,
-                            isBreak: false,
-                            timeLeft: 25 * 60,
-                        }
-                    );
-                    setMusicPlayer(
-                        data.music || {
-                            currentTrack: null,
-                            playlist: [],
-                            volume: 0,
-                            isPlaying: false,
-                            isMuted: true,
-                            currentTime: 0,
-                            shuffle: false,
-                            repeat: false,
-                            currentIndex: 0,
-                        }
-                    );
-                    setSettings(
-                        data.settings || {
-                            autoMusicPause: true,
-                            defaultWorkTime: 25,
-                            defaultBreakTime: 5,
-                        }
-                    );
-                } catch (error) {
-                    console.error("Error loading saved data:", error);
+                    setPomodoro(data.pomodoro || DEFAULT_POMODORO);
+                    setMusicPlayer(data.music || DEFAULT_MUSIC_PLAYER);
+                    setSettings(data.settings || DEFAULT_SETTINGS);
+                } catch {
+                    // Corrupted data, start fresh
                 }
             }
+            setIsLoaded(true);
         }
     }, []);
 
     // Save data to localStorage whenever state changes
     useEffect(() => {
+        if (!isLoaded) return;
         const sessionData: SessionData = {
             courses,
             pomodoro,
@@ -135,11 +134,8 @@ export default function FocusedLearningApp() {
             settings,
             timestamp: new Date(),
         };
-        localStorage.setItem(
-            "focusedLearningData",
-            JSON.stringify(sessionData)
-        );
-    }, [courses, pomodoro, musicPlayer, settings]);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+    }, [courses, pomodoro, musicPlayer, settings, isLoaded]);
 
     // Pomodoro Timer Logic
     useEffect(() => {
@@ -152,17 +148,29 @@ export default function FocusedLearningApp() {
                 }));
             }, 1000);
         } else if (pomodoro.isActive && pomodoro.timeLeft === 0) {
-            setPomodoro((prev) => ({
-                ...prev,
-                isActive: false,
-                isBreak: !prev.isBreak,
-                timeLeft: prev.isBreak
-                    ? prev.workTime * 60
-                    : prev.breakTime * 60,
-                currentSession: prev.isBreak
-                    ? prev.currentSession + 1
-                    : prev.currentSession,
-            }));
+            setPomodoro((prev) => {
+                // If break ended and all sessions are done, stop entirely
+                if (prev.isBreak && prev.currentSession >= prev.totalSessions) {
+                    return {
+                        ...prev,
+                        isActive: false,
+                        isBreak: false,
+                        timeLeft: prev.workTime * 60,
+                        currentSession: prev.totalSessions,
+                    };
+                }
+                return {
+                    ...prev,
+                    isActive: false,
+                    isBreak: !prev.isBreak,
+                    timeLeft: prev.isBreak
+                        ? prev.workTime * 60
+                        : prev.breakTime * 60,
+                    currentSession: prev.isBreak
+                        ? prev.currentSession + 1
+                        : prev.currentSession,
+                };
+            });
         }
         return () => clearInterval(interval);
     }, [pomodoro.isActive, pomodoro.timeLeft]);
@@ -172,13 +180,12 @@ export default function FocusedLearningApp() {
             const videoId = getYouTubeVideoId(newCourseUrl);
             const playlistId = getPlaylistId(newCourseUrl);
 
-            // Accept the course if it has either a video ID or a playlist ID
             if (videoId || playlistId) {
                 const newCourse: CourseProgress = {
                     id: Date.now().toString(),
                     title: newCourseTitle,
                     url: newCourseUrl,
-                    videoId: videoId || "", // Use empty string for playlist-only URLs
+                    videoId: videoId || "",
                     currentTime: 0,
                     duration: 0,
                     completed: false,
@@ -186,7 +193,7 @@ export default function FocusedLearningApp() {
                     playlistId: playlistId || undefined,
                     playlistIndex: 0,
                     notes: [],
-                    playlistProgress: {}, // Initialize empty playlist progress
+                    playlistProgress: {},
                 };
 
                 const updatedCourses = [...courses, newCourse];
@@ -194,9 +201,6 @@ export default function FocusedLearningApp() {
                 setNewCourseUrl("");
                 setNewCourseTitle("");
                 setShowAddCourse(false);
-            } else {
-                // Show error message for invalid URLs
-                alert("Please enter a valid YouTube video or playlist URL");
             }
         }
     };
@@ -207,12 +211,12 @@ export default function FocusedLearningApp() {
 
     const updateCourse = (
         courseId: string,
-        updates: Partial<CourseProgress>
+        updates: Partial<CourseProgress>,
     ) => {
         setCourses((prev) =>
             prev.map((course) =>
-                course.id === courseId ? { ...course, ...updates } : course
-            )
+                course.id === courseId ? { ...course, ...updates } : course,
+            ),
         );
 
         if (currentCourse && currentCourse.id === courseId) {
@@ -239,8 +243,8 @@ export default function FocusedLearningApp() {
                     }
                 }
             }
-        } catch (error) {
-            console.warn("Error controlling music:", error);
+        } catch {
+            // Music controls not available
         }
     };
 
@@ -248,7 +252,6 @@ export default function FocusedLearningApp() {
         setPomodoro((prev) => ({
             ...prev,
             isActive: true,
-            // Only reset timeLeft if it's at 0 (session ended) or if starting fresh
             timeLeft:
                 prev.timeLeft === 0
                     ? prev.isBreak
@@ -293,7 +296,7 @@ export default function FocusedLearningApp() {
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `learning-session-${
+        link.download = `zonepro-session-${
             new Date().toISOString().split("T")[0]
         }.json`;
         link.click();
@@ -307,7 +310,7 @@ export default function FocusedLearningApp() {
             reader.onload = (e) => {
                 try {
                     const data: SessionData = JSON.parse(
-                        e.target?.result as string
+                        e.target?.result as string,
                     );
                     setCourses(
                         data.courses.map((course) => ({
@@ -318,39 +321,11 @@ export default function FocusedLearningApp() {
                                     ...note,
                                     createdAt: new Date(note.createdAt),
                                 })) || [],
-                        })) || []
+                        })) || [],
                     );
-                    setPomodoro(
-                        data.pomodoro || {
-                            workTime: 25,
-                            breakTime: 5,
-                            currentSession: 1,
-                            totalSessions: 4,
-                            isActive: false,
-                            isBreak: false,
-                            timeLeft: 25 * 60,
-                        }
-                    );
-                    setMusicPlayer(
-                        data.music || {
-                            currentTrack: null,
-                            playlist: [],
-                            volume: 0,
-                            isPlaying: false,
-                            isMuted: true,
-                            currentTime: 0,
-                            shuffle: false,
-                            repeat: false,
-                            currentIndex: 0,
-                        }
-                    );
-                    setSettings(
-                        data.settings || {
-                            autoMusicPause: true,
-                            defaultWorkTime: 25,
-                            defaultBreakTime: 5,
-                        }
-                    );
+                    setPomodoro(data.pomodoro || DEFAULT_POMODORO);
+                    setMusicPlayer(data.music || DEFAULT_MUSIC_PLAYER);
+                    setSettings(data.settings || DEFAULT_SETTINGS);
 
                     setCurrentCourse(null);
                     setTimeout(() => {
@@ -360,16 +335,13 @@ export default function FocusedLearningApp() {
                                     new Date(course.lastWatched) >
                                     new Date(latest.lastWatched)
                                         ? course
-                                        : latest
+                                        : latest,
                             );
                             selectCourse(lastCourse);
                         }
                     }, 500);
-                } catch (error) {
-                    console.error("Error importing session:", error);
-                    alert(
-                        "Error importing session file. Please check the file format."
-                    );
+                } catch {
+                    // Invalid session file
                 }
             };
             reader.readAsText(file);
@@ -410,11 +382,9 @@ export default function FocusedLearningApp() {
                 <header className="flex justify-between items-center mb-8">
                     <div>
                         <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                            Focused Learning Hub
+                            ZonePro
                         </h1>
-                        <p className="text-gray-600">
-                            Master your learning with structured sessions
-                        </p>
+                        <p className="text-gray-600">Your Productivity Zone</p>
                     </div>
 
                     <SettingsSheet
@@ -475,7 +445,6 @@ export default function FocusedLearningApp() {
                                 }}
                                 onVideoSelect={(video, index) => {
                                     if (currentCourse) {
-                                        // Update playlist progress with video title
                                         const updatedPlaylistProgress = {
                                             ...currentCourse.playlistProgress,
                                             [video.id]: {
@@ -506,13 +475,13 @@ export default function FocusedLearningApp() {
 
                                         updateCourse(currentCourse.id, {
                                             playlistIndex: index,
-                                            videoId: video.id, // Update the video ID to play the selected video
+                                            videoId: video.id,
                                             currentTime:
                                                 currentCourse
                                                     .playlistProgress?.[
                                                     video.id
-                                                ]?.currentTime || 0, // Resume from last position
-                                            duration: 0, // Will be updated when video loads
+                                                ]?.currentTime || 0,
+                                            duration: 0,
                                             playlistProgress:
                                                 updatedPlaylistProgress,
                                         });
@@ -543,7 +512,6 @@ export default function FocusedLearningApp() {
                                 }))
                             }
                             onSetNewMusicUrl={setNewMusicUrl}
-                            onAddMusicTrack={() => {}}
                             onPlayTrack={playMusicTrack}
                             onDeleteTrack={deleteMusicTrack}
                         />

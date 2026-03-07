@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import type { MusicPlayer as MusicPlayerType, MusicTrack } from "@/types";
 import { getYouTubeVideoId } from "@/utils/youtube";
+import { DEFAULT_LOFI_VIDEO_ID, DEFAULT_LOFI_TITLE } from "@/lib/constants";
 
 interface MusicPlayerProps {
     musicPlayer: MusicPlayerType;
@@ -31,7 +32,6 @@ interface MusicPlayerProps {
     onToggleQueue: () => void;
     onUpdateMusicPlayer: (updates: Partial<MusicPlayerType>) => void;
     onSetNewMusicUrl: (url: string) => void;
-    onAddMusicTrack: () => void;
     onPlayTrack: (track: MusicTrack, index: number) => void;
     onDeleteTrack: (trackId: string) => void;
 }
@@ -44,7 +44,6 @@ export function MusicPlayer({
     onToggleQueue,
     onUpdateMusicPlayer,
     onSetNewMusicUrl,
-    onAddMusicTrack,
     onPlayTrack,
     onDeleteTrack,
 }: MusicPlayerProps) {
@@ -58,8 +57,8 @@ export function MusicPlayer({
         if (musicPlayer.playlist.length === 0) {
             const lofiTrack: MusicTrack = {
                 id: "default-lofi",
-                title: "Lofi Hip Hop - Study Music",
-                videoId: "jfKfPfyJRdk",
+                title: DEFAULT_LOFI_TITLE,
+                videoId: DEFAULT_LOFI_VIDEO_ID,
                 duration: 0,
             };
             onUpdateMusicPlayer({
@@ -82,28 +81,24 @@ export function MusicPlayer({
                 musicPlayerRef.current = new window.YT.Player("music-player", {
                     height: "1",
                     width: "1",
-                    videoId: "jfKfPfyJRdk",
+                    videoId: DEFAULT_LOFI_VIDEO_ID,
                     playerVars: {
                         autoplay: 1,
                         controls: 0,
                         loop: 1,
-                        playlist: "jfKfPfyJRdk",
+                        playlist: DEFAULT_LOFI_VIDEO_ID,
                     },
                     events: {
                         onReady: (event: any) => {
                             try {
                                 event.target.setVolume(musicPlayer.volume);
-                                // Expose control functions globally
                                 (window as any).musicPlayerControls = {
                                     play: () => playMusic(),
                                     pause: () => pauseMusic(),
                                     isPlaying: () => musicPlayer.isPlaying,
                                 };
-                            } catch (error) {
-                                console.warn(
-                                    "Error setting up music player:",
-                                    error
-                                );
+                            } catch {
+                                // Player setup error
                             }
                         },
                         onStateChange: (event: any) => {
@@ -118,29 +113,26 @@ export function MusicPlayer({
                                     onUpdateMusicPlayer({ isPlaying: true });
                                 } else if (
                                     event.data ===
-                                        window.YT.PlayerState.PAUSED ||
-                                    event.data === window.YT.PlayerState.ENDED
+                                    window.YT.PlayerState.PAUSED
                                 ) {
                                     onUpdateMusicPlayer({ isPlaying: false });
                                 } else if (
                                     event.data === window.YT.PlayerState.ENDED
                                 ) {
+                                    onUpdateMusicPlayer({ isPlaying: false });
                                     playNextTrack();
                                 }
-                            } catch (error) {
-                                console.warn(
-                                    "Error handling music player state change:",
-                                    error
-                                );
+                            } catch {
+                                // State change error
                             }
                         },
-                        onError: (event: any) => {
-                            console.error("Music player error:", event.data);
+                        onError: () => {
+                            // Music player error
                         },
                     },
                 });
-            } catch (error) {
-                console.error("Error creating music player:", error);
+            } catch {
+                // Player creation error
             }
         }
     }, [isYTReady, musicPlayer.volume, onUpdateMusicPlayer]);
@@ -154,8 +146,8 @@ export function MusicPlayer({
                         musicPlayer.isMuted ? 0 : musicPlayer.volume
                     );
                 }
-            } catch (error) {
-                console.warn("Error setting volume:", error);
+            } catch {
+                // Volume setting error
             }
         }
     }, [musicPlayer.volume, musicPlayer.isMuted]);
@@ -176,10 +168,9 @@ export function MusicPlayer({
             try {
                 if (typeof musicPlayerRef.current.playVideo === "function") {
                     musicPlayerRef.current.playVideo();
-                    // Don't set isPlaying here - let the state change event handle it
                 }
-            } catch (error) {
-                console.warn("Error playing music:", error);
+            } catch {
+                // Play error
             }
         }
     };
@@ -189,10 +180,9 @@ export function MusicPlayer({
             try {
                 if (typeof musicPlayerRef.current.pauseVideo === "function") {
                     musicPlayerRef.current.pauseVideo();
-                    // Don't set isPlaying here - let the state change event handle it
                 }
-            } catch (error) {
-                console.warn("Error pausing music:", error);
+            } catch {
+                // Pause error
             }
         }
     };
@@ -227,8 +217,8 @@ export function MusicPlayer({
                             musicPlayerRef.current.playVideo();
                         }
                     }
-                } catch (error) {
-                    console.warn("Error playing next track:", error);
+                } catch {
+                    // Next track error
                 }
             }
         }
@@ -264,8 +254,8 @@ export function MusicPlayer({
                             musicPlayerRef.current.playVideo();
                         }
                     }
-                } catch (error) {
-                    console.warn("Error playing previous track:", error);
+                } catch {
+                    // Previous track error
                 }
             }
         }
@@ -311,8 +301,8 @@ export function MusicPlayer({
                         }
                     }, 100);
                 }
-            } catch (error) {
-                console.warn("Error playing selected track:", error);
+            } catch {
+                // Track play error
             }
         }
     };

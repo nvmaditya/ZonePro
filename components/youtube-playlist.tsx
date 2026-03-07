@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { PlaylistVideoProgress } from "@/types";
 import { formatTime } from "@/utils/youtube";
+import { YouTubePlaylistExtractor } from "@/utils/youtube-playlist-extractor";
 
 // Helper function to format YouTube duration (PT4M13S -> 4:13)
 const formatYouTubeDuration = (duration: string): string => {
@@ -60,90 +61,7 @@ export function YouTubePlaylist({
     onPlaylistMetadata,
 }: YouTubePlaylistProps) {
     const [videos, setVideos] = useState<YouTubeVideo[]>([]);
-    const [loading, setLoading] = useState(false); // YouTube Playlist Extractor class - Optimized to use only 1 API call
-    class YouTubePlaylistExtractor {
-        constructor(private apiKey: string) {
-            this.apiKey = apiKey;
-        }
-
-        // Extract playlist ID from URL
-        extractPlaylistId(url: string): string | null {
-            const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-            return match ? match[1] : null;
-        }
-
-        // Get all playlist data (videos + metadata) in a single optimized call
-        async getPlaylistData(playlistUrl: string) {
-            const playlistId = this.extractPlaylistId(playlistUrl);
-            if (!playlistId) {
-                throw new Error("Invalid playlist URL");
-            }
-
-            const videos: any[] = [];
-            let totalItems = 0;
-            let playlistTitle = "";
-            let playlistDescription = "";
-            let nextPageToken = "";
-            let isFirstCall = true;
-
-            do {
-                // Single API call that gets everything we need
-                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${
-                    this.apiKey
-                }${nextPageToken ? `&pageToken=${nextPageToken}` : ""}`;
-
-                const response = await fetch(url);
-
-                if (!response.ok) {
-                    throw new Error(
-                        `API Error: ${response.status} - ${response.statusText}`
-                    );
-                }
-
-                const data = await response.json();
-
-                // Extract metadata from the first response (contains total count)
-                if (isFirstCall) {
-                    totalItems = data.pageInfo?.totalResults || 0;
-                    // Get playlist title from the first video's playlist info if available
-                    if (data.items && data.items.length > 0) {
-                        playlistTitle = `Playlist (${totalItems} videos)`;
-                        playlistDescription = `YouTube playlist with ${totalItems} videos`;
-                    }
-                    isFirstCall = false;
-                }
-
-                // Process videos
-                data.items.forEach((item: any) => {
-                    const snippet = item.snippet;
-                    videos.push({
-                        id: snippet.resourceId.videoId,
-                        title: snippet.title,
-                        description: snippet.description || "",
-                        thumbnail:
-                            snippet.thumbnails.medium?.url ||
-                            snippet.thumbnails.default?.url ||
-                            "/placeholder.jpg",
-                        duration: "Unknown", // Still unknown, but we maintain same functionality
-                        publishedAt: snippet.publishedAt,
-                        channelTitle: snippet.channelTitle,
-                        url: `https://www.youtube.com/watch?v=${snippet.resourceId.videoId}`,
-                    });
-                });
-
-                nextPageToken = data.nextPageToken || "";
-            } while (nextPageToken);
-
-            return {
-                videos,
-                metadata: {
-                    totalVideos: totalItems,
-                    title: playlistTitle,
-                    description: playlistDescription,
-                },
-            };
-        }
-    }
+    const [loading, setLoading] = useState(false);
 
     // Fetch playlist videos using the improved extractor
     const fetchPlaylistVideos = async (playlistId: string) => {
@@ -153,7 +71,6 @@ export function YouTubePlaylist({
             const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
 
             if (!apiKey) {
-                console.warn("YouTube API key not found. Using mock data.");
                 // Fallback to mock data if no API key
                 const mockVideos: YouTubeVideo[] = [
                     {
@@ -201,12 +118,11 @@ export function YouTubePlaylist({
                     duration: video.duration,
                     publishedAt: video.publishedAt,
                     channelTitle: video.channelTitle,
-                })
+                }),
             );
 
             setVideos(formattedVideos);
-        } catch (err) {
-            console.error("Error fetching playlist:", err);
+        } catch {
             setVideos([]);
         } finally {
             setLoading(false);
@@ -232,10 +148,10 @@ export function YouTubePlaylist({
 
     // Calculate overall playlist progress
     const completedVideos = videos.filter(
-        (video) => playlistProgress[video.id]?.completed
+        (video) => playlistProgress[video.id]?.completed,
     ).length;
     const watchedVideos = videos.filter(
-        (video) => playlistProgress[video.id]
+        (video) => playlistProgress[video.id],
     ).length;
     const totalDuration = videos.reduce((acc, video) => {
         const progress = playlistProgress[video.id];
@@ -288,7 +204,7 @@ export function YouTubePlaylist({
                                 {videos.length > 0
                                     ? Math.round(
                                           (completedVideos / videos.length) *
-                                              100
+                                              100,
                                       )
                                     : 0}
                                 %
@@ -373,16 +289,16 @@ export function YouTubePlaylist({
                                                             Math.floor(
                                                                 playlistProgress[
                                                                     video.id
-                                                                ].currentTime
-                                                            )
+                                                                ].currentTime,
+                                                            ),
                                                         )}{" "}
                                                         /{" "}
                                                         {formatTime(
                                                             Math.floor(
                                                                 playlistProgress[
                                                                     video.id
-                                                                ].duration
-                                                            )
+                                                                ].duration,
+                                                            ),
                                                         )}
                                                     </span>
                                                     {playlistProgress[video.id]
@@ -439,7 +355,7 @@ export function YouTubePlaylist({
                                                                                     .id
                                                                             ]
                                                                                 .duration) *
-                                                                            100
+                                                                            100,
                                                                     )
                                                                   : 0
                                                           }%`}
@@ -453,7 +369,7 @@ export function YouTubePlaylist({
                                                     e.stopPropagation();
                                                     window.open(
                                                         `https://www.youtube.com/watch?v=${video.id}`,
-                                                        "_blank"
+                                                        "_blank",
                                                     );
                                                 }}
                                             >

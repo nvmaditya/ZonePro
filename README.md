@@ -1,30 +1,29 @@
-# Focused learning app
+# ZonePro
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+A focused learning application built with Next.js, React, and Tailwind CSS. Track YouTube courses, use a Pomodoro timer, and play background music while you learn.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/aditya-khandelwals-projects-9b18407a/v0-focused-learning-app)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/P9db51yozZ8)
+## Features
 
-## Overview
+- YouTube course tracking with progress and timestamped notes
+- Playlist support with per-video progress tracking
+- Pomodoro timer with configurable work/break intervals
+- Background music player with queue management
+- Session export/import for backup
+- Supabase integration for cross-device sync
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## Getting Started
 
-## Deployment
+```bash
+pnpm install
+pnpm dev
+```
 
-Your project is live at:
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-**[https://vercel.com/aditya-khandelwals-projects-9b18407a/v0-focused-learning-app](https://vercel.com/aditya-khandelwals-projects-9b18407a/v0-focused-learning-app)**
+## Environment Variables
 
-## Build your app
+Copy `.env.example` to `.env` and fill in the required values:
 
-Continue building your app on:
-
-**[https://v0.dev/chat/projects/P9db51yozZ8](https://v0.dev/chat/projects/P9db51yozZ8)**
-
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+- `NEXT_PUBLIC_YOUTUBE_API_KEY` - YouTube Data API v3 key
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anon/public key

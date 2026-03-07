@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "FocusTube",
-    description: "Created by AdixSasuke",
-    generator: "theadityakhandelwal.in",
+    title: "ZonePro",
+    description: "Your Productivity Zone",
 };
 
 export default function RootLayout({
