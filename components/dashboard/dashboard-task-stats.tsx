@@ -73,7 +73,9 @@ export function DashboardTaskStats({ tasks }: DashboardTaskStatsProps) {
                                 borderRadius: "8px",
                                 color: "hsl(var(--popover-foreground))",
                             }}
-                            labelStyle={{ color: "hsl(var(--muted-foreground))" }}
+                            labelStyle={{
+                                color: "hsl(var(--muted-foreground))",
+                            }}
                         />
                         <Bar
                             dataKey="count"

@@ -89,7 +89,9 @@ export function DashboardProductivityScore({
                                 borderRadius: "8px",
                                 color: "hsl(var(--popover-foreground))",
                             }}
-                            labelStyle={{ color: "hsl(var(--muted-foreground))" }}
+                            labelStyle={{
+                                color: "hsl(var(--muted-foreground))",
+                            }}
                         />
                         <Line
                             type="monotone"
