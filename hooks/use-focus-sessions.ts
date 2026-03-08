@@ -42,7 +42,7 @@ export function useFocusSessions() {
     const getTodayMinutes = useCallback(() => {
         const today = format(new Date(), "yyyy-MM-dd");
         return sessions
-            .filter((s) => s.date === today && s.completed)
+            .filter((s) => s.date === today)
             .reduce((sum, s) => sum + s.actualMinutes, 0);
     }, [sessions]);
 
