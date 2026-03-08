@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,6 @@ import {
     Settings,
     Download,
     Upload,
-    Check,
     Trash2,
     AlertTriangle,
 } from "lucide-react";
@@ -69,52 +68,8 @@ export function SettingsSheet({
 }: SettingsSheetProps) {
     const { userId } = useUserId();
 
-    // Local state for pomodoro settings
-    const [localSettings, setLocalSettings] = useState({
-        workTime: pomodoro.workTime,
-        breakTime: pomodoro.breakTime,
-        totalSessions: pomodoro.totalSessions,
-    });
-
-    // State for save button feedback
-    const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
-        "idle",
-    );
-
     // State for clear data confirmation dialog
     const [showClearDataDialog, setShowClearDataDialog] = useState(false);
-
-    // Update local settings when props change
-    useEffect(() => {
-        setLocalSettings({
-            workTime: pomodoro.workTime,
-            breakTime: pomodoro.breakTime,
-            totalSessions: pomodoro.totalSessions,
-        });
-    }, [pomodoro.workTime, pomodoro.breakTime, pomodoro.totalSessions]);
-
-    const handleSaveAllSettings = async () => {
-        setSaveState("saving");
-
-        setTimeout(() => {
-            // Update pomodoro settings only
-            onUpdatePomodoro({
-                workTime: localSettings.workTime,
-                breakTime: localSettings.breakTime,
-                totalSessions: localSettings.totalSessions,
-                timeLeft: !pomodoro.isActive
-                    ? localSettings.workTime * 60
-                    : pomodoro.timeLeft,
-            });
-
-            setTimeout(() => {
-                setSaveState("saved");
-                setTimeout(() => {
-                    setSaveState("idle");
-                }, 2000);
-            }, 300);
-        }, 300);
-    };
 
     const clearAllData = () => {
         // Clear all known localStorage keys (both unscoped and scoped)
@@ -132,11 +87,6 @@ export function SettingsSheet({
         window.location.reload();
     };
 
-    const hasChanges =
-        localSettings.workTime !== pomodoro.workTime ||
-        localSettings.breakTime !== pomodoro.breakTime ||
-        localSettings.totalSessions !== pomodoro.totalSessions;
-
     return (
         <Sheet>
             <SheetTrigger asChild>
@@ -145,7 +95,7 @@ export function SettingsSheet({
                     <span className="sr-only">Settings</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent className="overflow-y-auto">
+            <SheetContent className="overflow-y-auto overflow-x-hidden sm:max-w-md">
                 <SheetHeader>
                     <SheetTitle>Settings</SheetTitle>
                     <SheetDescription>
@@ -264,12 +214,12 @@ export function SettingsSheet({
                         <div>
                             <Label>Work Time (minutes)</Label>
                             <Slider
-                                value={[localSettings.workTime]}
+                                value={[pomodoro.workTime]}
                                 onValueChange={([value]) =>
-                                    setLocalSettings((prev) => ({
-                                        ...prev,
+                                    onUpdatePomodoro({
                                         workTime: value,
-                                    }))
+                                        ...(!pomodoro.isActive ? { timeLeft: value * 60 } : {}),
+                                    })
                                 }
                                 max={60}
                                 min={5}
@@ -277,18 +227,15 @@ export function SettingsSheet({
                                 className="mt-2"
                             />
                             <p className="text-sm text-muted-foreground mt-1">
-                                {localSettings.workTime} minutes
+                                {pomodoro.workTime} minutes
                             </p>
                         </div>
                         <div>
                             <Label>Break Time (minutes)</Label>
                             <Slider
-                                value={[localSettings.breakTime]}
+                                value={[pomodoro.breakTime]}
                                 onValueChange={([value]) =>
-                                    setLocalSettings((prev) => ({
-                                        ...prev,
-                                        breakTime: value,
-                                    }))
+                                    onUpdatePomodoro({ breakTime: value })
                                 }
                                 max={30}
                                 min={5}
@@ -296,18 +243,15 @@ export function SettingsSheet({
                                 className="mt-2"
                             />
                             <p className="text-sm text-muted-foreground mt-1">
-                                {localSettings.breakTime} minutes
+                                {pomodoro.breakTime} minutes
                             </p>
                         </div>
                         <div>
                             <Label>Total Sessions</Label>
                             <Slider
-                                value={[localSettings.totalSessions]}
+                                value={[pomodoro.totalSessions]}
                                 onValueChange={([value]) =>
-                                    setLocalSettings((prev) => ({
-                                        ...prev,
-                                        totalSessions: value,
-                                    }))
+                                    onUpdatePomodoro({ totalSessions: value })
                                 }
                                 max={8}
                                 min={1}
@@ -315,50 +259,10 @@ export function SettingsSheet({
                                 className="mt-2"
                             />
                             <p className="text-sm text-muted-foreground mt-1">
-                                {localSettings.totalSessions} sessions
+                                {pomodoro.totalSessions} sessions
                             </p>
                         </div>
 
-                        {/* Save Button */}
-                        <div className="pt-2">
-                            {hasChanges && saveState === "idle" && (
-                                <p className="text-xs text-amber-600 dark:text-amber-400 mb-2 text-center font-medium">
-                                    Unsaved changes
-                                </p>
-                            )}
-
-                            <Button
-                                onClick={handleSaveAllSettings}
-                                className={`w-full transition-all duration-200 ${
-                                    saveState === "saving"
-                                        ? "bg-foreground/80 hover:bg-foreground/90"
-                                        : saveState === "saved"
-                                          ? "bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600"
-                                          : hasChanges
-                                            ? "bg-foreground hover:bg-foreground shadow-md"
-                                            : "bg-muted text-muted-foreground cursor-not-allowed"
-                                }`}
-                                disabled={!hasChanges || saveState === "saving"}
-                                variant="default"
-                                size="default"
-                            >
-                                {saveState === "saving" ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                        <span>Applying Changes...</span>
-                                    </div>
-                                ) : saveState === "saved" ? (
-                                    <div className="flex items-center gap-2">
-                                        <Check className="w-4 h-4" />
-                                        <span>Settings Saved!</span>
-                                    </div>
-                                ) : (
-                                    <span className="font-medium">
-                                        Save Pomodoro Settings
-                                    </span>
-                                )}
-                            </Button>
-                        </div>
                     </div>
 
                     <Separator />
