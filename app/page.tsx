@@ -172,6 +172,17 @@ export default function ZoneProApp() {
                     onPlay={playMusic}
                     onPause={pauseMusic}
                     onNext={playNextTrack}
+                    onPrev={playPreviousTrack}
+                    showMusicQueue={showMusicQueue}
+                    newMusicUrl={newMusicUrl}
+                    onToggleQueue={() => setShowMusicQueue(!showMusicQueue)}
+                    onUpdateMusicPlayer={updateMusicPlayer}
+                    onSetNewMusicUrl={setNewMusicUrl}
+                    onPlayTrack={(track, index) => {
+                        playTrack(track, index);
+                        loadAndPlayTrack(track);
+                    }}
+                    onDeleteTrack={deleteTrack}
                 />
             </AppHeader>
 
@@ -196,22 +207,6 @@ export default function ZoneProApp() {
                         startPomodoro={startPomodoro}
                         pausePomodoro={pausePomodoro}
                         resetPomodoro={resetPomodoro}
-                        musicPlayer={musicPlayer}
-                        showMusicQueue={showMusicQueue}
-                        newMusicUrl={newMusicUrl}
-                        onToggleQueue={() => setShowMusicQueue(!showMusicQueue)}
-                        onUpdateMusicPlayer={updateMusicPlayer}
-                        onSetNewMusicUrl={setNewMusicUrl}
-                        onPlayTrack={(track, index) => {
-                            playTrack(track, index);
-                            loadAndPlayTrack(track);
-                        }}
-                        onDeleteTrack={deleteTrack}
-                        onPlayMusic={playMusic}
-                        onPauseMusic={pauseMusic}
-                        onPlayNext={playNextTrack}
-                        onPlayPrev={playPreviousTrack}
-                        isActuallyPlaying={isActuallyPlaying}
                         settings={settings}
                         handleMusicControl={handleMusicControl}
                         musicWasPlaying={musicWasPlaying}
