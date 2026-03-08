@@ -50,8 +50,7 @@ export function PomodoroTimer({
     const [showCustomTimer, setShowCustomTimer] = useState(false);
     const [customTimerMin, setCustomTimerMin] = useState("");
 
-    // --- Shared sub-components ---
-
+    // --- Mode tabs ---
     const modeTabs = (
         <Tabs
             value={viewMode}
@@ -59,10 +58,10 @@ export function PomodoroTimer({
                 onSetViewMode(v as PomodoroSession["mode"])
             }
         >
-            <TabsList className={variant === "full" ? "flex flex-col w-full h-auto gap-1" : "w-full"}>
+            <TabsList className="w-full">
                 <TabsTrigger
                     value="pomodoro"
-                    className={variant === "full" ? "w-full justify-start text-xs" : "flex-1 text-xs"}
+                    className={variant === "full" ? "flex-1 text-sm py-2" : "flex-1 text-xs"}
                 >
                     Pomodoro
                     {activeMode === "pomodoro" && pomodoro.isActive && viewMode !== "pomodoro" && (
@@ -71,7 +70,7 @@ export function PomodoroTimer({
                 </TabsTrigger>
                 <TabsTrigger
                     value="timer"
-                    className={variant === "full" ? "w-full justify-start text-xs" : "flex-1 text-xs"}
+                    className={variant === "full" ? "flex-1 text-sm py-2" : "flex-1 text-xs"}
                 >
                     Timer
                     {activeMode === "timer" && pomodoro.isActive && viewMode !== "timer" && (
@@ -80,7 +79,7 @@ export function PomodoroTimer({
                 </TabsTrigger>
                 <TabsTrigger
                     value="stopwatch"
-                    className={variant === "full" ? "w-full justify-start text-xs" : "flex-1 text-xs"}
+                    className={variant === "full" ? "flex-1 text-sm py-2" : "flex-1 text-xs"}
                 >
                     Stopwatch
                     {activeMode === "stopwatch" && pomodoro.isActive && viewMode !== "stopwatch" && (
@@ -196,19 +195,10 @@ export function PomodoroTimer({
         </div>
     );
 
-    // --- Mode-specific options (left column in full variant) ---
-    const modeOptions = (
-        <>
-            {viewMode === "pomodoro" && pomodoroCustomInputs}
-            {viewMode === "timer" && (!isViewingActiveMode || (!pomodoro.isActive &&
-                pomodoro.timeLeft === (pomodoro.timerDuration || 300))) && timerPresets}
-        </>
-    );
-
     // --- Timer display ---
     const timerDisplay = (
         <div className="text-center">
-            <div className={`font-mono font-bold text-primary mb-2 ${variant === "full" ? "text-5xl" : "text-4xl"}`}>
+            <div className={`font-mono font-bold text-primary mb-2 ${variant === "full" ? "text-4xl" : "text-3xl"}`}>
                 {viewMode === "stopwatch"
                     ? formatTime(isViewingActiveMode ? (pomodoro.elapsed || 0) : 0)
                     : viewMode === "timer"
@@ -228,14 +218,14 @@ export function PomodoroTimer({
     // --- Control buttons ---
     const controls = (
         <div className="space-y-3">
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-center">
                 {!(isViewingActiveMode && pomodoro.isActive) ? (
-                    <Button onClick={onStart} className="flex-1">
+                    <Button onClick={onStart} className="flex-1 max-w-48">
                         <Play className="w-4 h-4 mr-2" />
                         {!isViewingActiveMode && pomodoro.isActive ? "Switch & Start" : "Start"}
                     </Button>
                 ) : (
-                    <Button onClick={onPause} variant="outline" className="flex-1">
+                    <Button onClick={onPause} variant="outline" className="flex-1 max-w-48">
                         <Pause className="w-4 h-4 mr-2" />
                         Pause
                     </Button>
@@ -267,28 +257,24 @@ export function PomodoroTimer({
         </div>
     );
 
-    // --- Full variant: left/right layout ---
+    // --- Full variant: single centered column, max-width constrained ---
     if (variant === "full") {
         return (
-            <div className="p-4">
-                <div className="flex flex-col sm:flex-row gap-6">
-                    {/* Left: mode tabs + options */}
-                    <div className="sm:w-48 space-y-3 shrink-0">
-                        {modeTabs}
-                        {modeOptions}
-                    </div>
-                    {/* Right: timer + controls */}
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-3">
-                        {backgroundNotice}
-                        {timerDisplay}
-                        {controls}
-                    </div>
+            <div className="p-6 flex justify-center">
+                <div className="w-full max-w-md space-y-5">
+                    {modeTabs}
+                    {backgroundNotice}
+                    {viewMode === "pomodoro" && pomodoroCustomInputs}
+                    {viewMode === "timer" && (!isViewingActiveMode || (!pomodoro.isActive &&
+                        pomodoro.timeLeft === (pomodoro.timerDuration || 300))) && timerPresets}
+                    {timerDisplay}
+                    {controls}
                 </div>
             </div>
         );
     }
 
-    // --- Compact variant: single column ---
+    // --- Compact variant: single column (popover) ---
     return (
         <div className="p-4 space-y-4">
             {modeTabs}

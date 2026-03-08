@@ -169,14 +169,14 @@ export function FocusSection() {
             />
 
             {/* Shared Timer */}
-            <Card>
+            <Card className="max-w-2xl mx-auto">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                         <Clock className="w-5 h-5" />
                         Timer
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-0">
+                <CardContent className="p-0 overflow-hidden">
                     <PomodoroTimer
                         pomodoro={pomodoro}
                         onStart={startPomodoro}
