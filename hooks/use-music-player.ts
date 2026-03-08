@@ -19,27 +19,33 @@ export function useMusicPlayer() {
     const [musicPlayer, setMusicPlayer] =
         useState<MusicPlayer>(DEFAULT_MUSIC_PLAYER);
     const [musicWasPlaying, setMusicWasPlaying] = useState(false);
+    const [activated, setActivated] = useState(false);
+
+    const activate = useCallback(() => {
+        setActivated(true);
+    }, []);
+
+    const deactivate = useCallback(() => {
+        setActivated(false);
+    }, []);
 
     const updateMusicPlayer = useCallback((updates: Partial<MusicPlayer>) => {
         setMusicPlayer((prev) => ({ ...prev, ...updates }));
     }, []);
 
-    const handleMusicControl = useCallback(
-        (action: "pause" | "play") => {
-            try {
-                if (typeof window !== "undefined" && window.musicPlayerControls) {
-                    if (action === "pause") {
-                        window.musicPlayerControls.pause();
-                    } else {
-                        window.musicPlayerControls.play();
-                    }
+    const handleMusicControl = useCallback((action: "pause" | "play") => {
+        try {
+            if (typeof window !== "undefined" && window.musicPlayerControls) {
+                if (action === "pause") {
+                    window.musicPlayerControls.pause();
+                } else {
+                    window.musicPlayerControls.play();
                 }
-            } catch {
-                // Music controls not available
             }
-        },
-        [],
-    );
+        } catch {
+            // Music controls not available
+        }
+    }, []);
 
     const playTrack = useCallback((track: MusicTrack, index: number) => {
         setMusicPlayer((prev) => ({
@@ -67,5 +73,8 @@ export function useMusicPlayer() {
         handleMusicControl,
         playTrack,
         deleteTrack,
+        activated,
+        activate,
+        deactivate,
     };
 }

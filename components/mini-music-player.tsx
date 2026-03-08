@@ -42,6 +42,7 @@ interface MiniMusicPlayerProps {
     onSetNewMusicUrl: (url: string) => void;
     onPlayTrack: (track: MusicTrack, index: number) => void;
     onDeleteTrack: (trackId: string) => void;
+    onActivate: () => void;
 }
 
 export function MiniMusicPlayer({
@@ -58,6 +59,7 @@ export function MiniMusicPlayer({
     onSetNewMusicUrl,
     onPlayTrack,
     onDeleteTrack,
+    onActivate,
 }: MiniMusicPlayerProps) {
     const defaultInitRef = useRef(false);
 
@@ -128,7 +130,7 @@ export function MiniMusicPlayer({
                     {/* Transport Controls */}
                     <div className="flex items-center justify-center gap-3">
                         <Button
-                            onClick={onPrev}
+                            onClick={() => { onActivate(); onUpdateMusicPlayer({ isMuted: false }); onPrev(); }}
                             variant="outline"
                             size="sm"
                             disabled={musicPlayer.playlist.length === 0}
@@ -137,7 +139,7 @@ export function MiniMusicPlayer({
                             <SkipBack className="w-4 h-4" />
                         </Button>
                         <Button
-                            onClick={shouldShowPause ? onPause : onPlay}
+                            onClick={shouldShowPause ? onPause : () => { onActivate(); onUpdateMusicPlayer({ isMuted: false }); onPlay(); }}
                             size="sm"
                             disabled={!musicPlayer.currentTrack}
                             className="h-10 w-10 rounded-full p-0"
@@ -149,7 +151,7 @@ export function MiniMusicPlayer({
                             )}
                         </Button>
                         <Button
-                            onClick={onNext}
+                            onClick={() => { onActivate(); onUpdateMusicPlayer({ isMuted: false }); onNext(); }}
                             variant="outline"
                             size="sm"
                             disabled={musicPlayer.playlist.length === 0}
@@ -162,11 +164,12 @@ export function MiniMusicPlayer({
                     {/* Volume */}
                     <div className="flex items-center gap-2">
                         <Button
-                            onClick={() =>
+                            onClick={() => {
+                                if (musicPlayer.isMuted) onActivate();
                                 onUpdateMusicPlayer({
                                     isMuted: !musicPlayer.isMuted,
-                                })
-                            }
+                                });
+                            }}
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0"
@@ -277,12 +280,14 @@ export function MiniMusicPlayer({
                                                 </p>
                                                 <div className="flex gap-0.5 shrink-0">
                                                     <Button
-                                                        onClick={() =>
+                                                        onClick={() => {
+                                                            onActivate();
+                                                            onUpdateMusicPlayer({ isMuted: false });
                                                             onPlayTrack(
                                                                 track,
                                                                 index,
-                                                            )
-                                                        }
+                                                            );
+                                                        }}
                                                         size="sm"
                                                         variant={
                                                             musicPlayer.currentIndex ===

@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 
-export function useYouTubeAPI() {
+export function useYouTubeAPI(enabled = true) {
     const [isYTReady, setIsYTReady] = useState(false);
 
     useEffect(() => {
+        if (!enabled) return;
+
         if (typeof window !== "undefined" && !window.YT) {
             const tag = document.createElement("script");
             tag.src = "https://www.youtube.com/iframe_api";
@@ -18,7 +20,7 @@ export function useYouTubeAPI() {
         } else if (typeof window !== "undefined") {
             setIsYTReady(true);
         }
-    }, []);
+    }, [enabled]);
 
     return { isYTReady };
 }
