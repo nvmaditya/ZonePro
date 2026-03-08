@@ -36,6 +36,8 @@ export function FocusSection() {
         skipToWork,
         setViewMode,
         setTimerDuration,
+        setWorkTime,
+        setBreakTime,
         lastStoppedSession,
     } = useAppPomodoro();
 
@@ -184,6 +186,9 @@ export function FocusSection() {
                         onSkipToWork={skipToWork}
                         onSetViewMode={setViewMode}
                         onSetTimerDuration={setTimerDuration}
+                        onSetWorkTime={setWorkTime}
+                        onSetBreakTime={setBreakTime}
+                        variant="full"
                     />
                 </CardContent>
             </Card>
