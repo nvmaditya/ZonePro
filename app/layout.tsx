@@ -7,7 +7,6 @@ import "./globals.css";
 const poppins = Poppins({
     subsets: ["latin"],
     weight: ["300", "400", "500", "600", "700"],
-    variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +21,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={poppins.variable}>
+            <body className={poppins.className}>
                 <ThemeProvider
                     attribute="class"
                     defaultTheme="system"
