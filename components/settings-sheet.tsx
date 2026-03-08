@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ALL_STORAGE_KEYS, STORAGE_KEY } from "@/lib/constants";
 import { useUserId } from "@/contexts/user-id-context";
+import { useAppFocus } from "@/contexts/app-data-context";
 import type { PomodoroSession, AppSettings } from "@/types";
 
 interface SettingsSheetProps {
@@ -67,6 +68,15 @@ export function SettingsSheet({
     onImportSession,
 }: SettingsSheetProps) {
     const { userId } = useUserId();
+    const { sessions, getTodayMinutes } = useAppFocus();
+
+    // Compute focus stats
+    const todayFocusMinutes = getTodayMinutes();
+    const totalSessionCount = sessions.length;
+    const completedCount = sessions.filter((s) => s.completed).length;
+    const completionRate = totalSessionCount > 0
+        ? Math.round((completedCount / totalSessionCount) * 100)
+        : 0;
 
     // State for clear data confirmation dialog
     const [showClearDataDialog, setShowClearDataDialog] = useState(false);
@@ -330,23 +340,39 @@ export function SettingsSheet({
 
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium">
-                            Current Session Stats
+                            Stats
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
+                            <div className="text-center p-4 bg-muted rounded-lg border border-border">
+                                <div className="text-2xl font-bold text-foreground">
+                                    {todayFocusMinutes}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                    Focus Min Today
+                                </div>
+                            </div>
+                            <div className="text-center p-4 bg-muted rounded-lg border border-border">
+                                <div className="text-2xl font-bold text-foreground">
+                                    {totalSessionCount}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                    Total Sessions
+                                </div>
+                            </div>
+                            <div className="text-center p-4 bg-muted rounded-lg border border-border">
+                                <div className="text-2xl font-bold text-foreground">
+                                    {completionRate}%
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                    Completion Rate
+                                </div>
+                            </div>
                             <div className="text-center p-4 bg-muted rounded-lg border border-border">
                                 <div className="text-2xl font-bold text-foreground">
                                     {coursesCount}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
                                     Total Courses
-                                </div>
-                            </div>
-                            <div className="text-center p-4 bg-muted rounded-lg border border-border">
-                                <div className="text-2xl font-bold text-foreground">
-                                    {musicTracksCount}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                    Music Tracks
                                 </div>
                             </div>
                         </div>

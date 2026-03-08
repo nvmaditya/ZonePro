@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { History } from "lucide-react";
+import { History, CheckCircle2, Circle } from "lucide-react";
 import type { FocusSession } from "@/types";
 import { formatShortDate } from "@/lib/date-utils";
 
@@ -53,6 +53,7 @@ export function FocusSessionLog({ sessions, taskNames }: FocusSessionLogProps) {
                             <TableHead>Date</TableHead>
                             <TableHead>Type</TableHead>
                             <TableHead>Duration</TableHead>
+                            <TableHead>Status</TableHead>
                             <TableHead>Task</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -72,6 +73,24 @@ export function FocusSessionLog({ sessions, taskNames }: FocusSessionLogProps) {
                                 </TableCell>
                                 <TableCell className="text-sm">
                                     {session.actualMinutes} min
+                                    {session.plannedMinutes > 0 && session.actualMinutes !== session.plannedMinutes && (
+                                        <span className="text-muted-foreground text-xs ml-1">
+                                            / {session.plannedMinutes}
+                                        </span>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    {session.completed ? (
+                                        <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-600">
+                                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                                            Done
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="secondary" className="text-xs">
+                                            <Circle className="w-3 h-3 mr-1" />
+                                            Partial
+                                        </Badge>
+                                    )}
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">
                                     {session.taskId &&
