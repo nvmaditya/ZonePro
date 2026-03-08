@@ -1,10 +1,21 @@
 "use client";
 import { useState, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pin, PinOff, Archive, ArchiveRestore, Trash2, X } from "lucide-react";
+import {
+    Pin,
+    PinOff,
+    Archive,
+    ArchiveRestore,
+    Trash2,
+    X,
+    Pencil,
+    Eye,
+} from "lucide-react";
 import type { Note } from "@/types";
 
 interface NoteEditorProps {
@@ -23,6 +34,7 @@ export function NoteEditor({
     onToggleArchived,
 }: NoteEditorProps) {
     const [newTag, setNewTag] = useState("");
+    const [previewMode, setPreviewMode] = useState(false);
     const debounceRef = useRef<NodeJS.Timeout>();
 
     const handleContentChange = (content: string) => {
@@ -73,6 +85,26 @@ export function NoteEditor({
                         <Archive className="w-4 h-4" />
                     )}
                 </Button>
+                <div className="flex items-center gap-0.5 border-l ml-1 pl-1">
+                    <Button
+                        size="sm"
+                        variant={!previewMode ? "secondary" : "ghost"}
+                        onClick={() => setPreviewMode(false)}
+                        className="h-7 px-2 text-xs"
+                    >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Write
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant={previewMode ? "secondary" : "ghost"}
+                        onClick={() => setPreviewMode(true)}
+                        className="h-7 px-2 text-xs"
+                    >
+                        <Eye className="w-3 h-3 mr-1" />
+                        Preview
+                    </Button>
+                </div>
                 <div className="flex-1" />
                 <Button
                     size="sm"
@@ -120,13 +152,22 @@ export function NoteEditor({
             </div>
 
             {/* Content */}
-            <div className="flex-1 px-4 pb-4">
-                <Textarea
-                    defaultValue={note.content}
-                    onChange={(e) => handleContentChange(e.target.value)}
-                    placeholder="Start writing... (Markdown supported)"
-                    className="h-full min-h-[300px] resize-none border-0 focus-visible:ring-0 shadow-none font-mono text-sm"
-                />
+            <div className="flex-1 px-4 pb-4 overflow-y-auto">
+                {previewMode ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {note.content || "*Nothing to preview*"}
+                        </ReactMarkdown>
+                    </div>
+                ) : (
+                    <Textarea
+                        key={`editor-${note.id}`}
+                        defaultValue={note.content}
+                        onChange={(e) => handleContentChange(e.target.value)}
+                        placeholder="Start writing... (Markdown supported)"
+                        className="h-full min-h-[300px] resize-none border-0 focus-visible:ring-0 shadow-none font-mono text-sm"
+                    />
+                )}
             </div>
         </div>
     );
