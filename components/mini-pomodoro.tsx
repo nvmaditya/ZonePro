@@ -18,7 +18,7 @@ interface MiniPomodoroProps {
     onReset: () => void;
     onSkipToBreak: () => void;
     onSkipToWork: () => void;
-    onSetMode: (mode: PomodoroSession["mode"]) => void;
+    onSetViewMode: (mode: PomodoroSession["mode"]) => void;
     onSetTimerDuration: (seconds: number) => void;
 }
 
@@ -29,9 +29,10 @@ export function MiniPomodoro({
     onReset,
     onSkipToBreak,
     onSkipToWork,
-    onSetMode,
+    onSetViewMode,
     onSetTimerDuration,
 }: MiniPomodoroProps) {
+    // Mini pill always shows the ACTIVE mode timer, not viewMode
     const mode = pomodoro.mode || "pomodoro";
 
     const isIdle =
@@ -87,7 +88,7 @@ export function MiniPomodoro({
                     onReset={onReset}
                     onSkipToBreak={onSkipToBreak}
                     onSkipToWork={onSkipToWork}
-                    onSetMode={onSetMode}
+                    onSetViewMode={onSetViewMode}
                     onSetTimerDuration={onSetTimerDuration}
                 />
             </PopoverContent>

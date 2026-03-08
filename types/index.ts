@@ -53,8 +53,10 @@ export interface PomodoroSession {
     isBreak: boolean;
     timeLeft: number;
     mode: PomodoroMode;
+    viewMode?: PomodoroMode;
     timerDuration?: number;
     elapsed?: number;
+    startedAt?: string;
 }
 
 export interface MusicTrack {
@@ -151,7 +153,7 @@ export interface TaskRecurrence {
 export interface FocusSession {
     id: string;
     taskId?: string;
-    type: "pomodoro" | "stopwatch" | "timeblock";
+    type: "pomodoro" | "timer" | "stopwatch" | "timeblock";
     startedAt: string;
     endedAt?: string;
     plannedMinutes: number;

@@ -6,12 +6,14 @@ import {
     useRef,
     useCallback,
     type ReactNode,
+    type MutableRefObject,
 } from "react";
 import { useTasks } from "@/hooks/use-tasks";
 import { useFocusSessions } from "@/hooks/use-focus-sessions";
 import { useHabits } from "@/hooks/use-habits";
 import type { AppSettings, PomodoroSession } from "@/types";
 import { DEFAULT_APP_SETTINGS } from "@/lib/constants";
+import type { StoppedSessionInfo } from "@/hooks/use-pomodoro";
 
 type TasksReturn = ReturnType<typeof useTasks>;
 type FocusReturn = ReturnType<typeof useFocusSessions>;
@@ -24,8 +26,11 @@ export interface PomodoroActions {
     resetPomodoro: () => void;
     skipToBreak: () => void;
     skipToWork: () => void;
-    setMode: (mode: PomodoroSession["mode"]) => void;
+    setViewMode: (mode: PomodoroSession["mode"]) => void;
     setTimerDuration: (seconds: number) => void;
+    setWorkTime: (minutes: number) => void;
+    setBreakTime: (minutes: number) => void;
+    lastStoppedSession: MutableRefObject<StoppedSessionInfo | null>;
 }
 
 interface AppDataContextValue {
@@ -46,6 +51,8 @@ interface AppDataProviderProps {
     pomodoroActions?: PomodoroActions;
 }
 
+const defaultLastStopped = { current: null };
+
 const DEFAULT_POMODORO_ACTIONS: PomodoroActions = {
     pomodoro: { workTime: 25, breakTime: 5, currentSession: 1, totalSessions: 4, isActive: false, isBreak: false, timeLeft: 1500, mode: "pomodoro", elapsed: 0 },
     startPomodoro: () => {},
@@ -53,8 +60,11 @@ const DEFAULT_POMODORO_ACTIONS: PomodoroActions = {
     resetPomodoro: () => {},
     skipToBreak: () => {},
     skipToWork: () => {},
-    setMode: () => {},
+    setViewMode: () => {},
     setTimerDuration: () => {},
+    setWorkTime: () => {},
+    setBreakTime: () => {},
+    lastStoppedSession: defaultLastStopped,
 };
 
 export function AppDataProvider({ children, settings = DEFAULT_APP_SETTINGS, pomodoroActions = DEFAULT_POMODORO_ACTIONS }: AppDataProviderProps) {

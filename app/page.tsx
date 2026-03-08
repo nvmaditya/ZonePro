@@ -87,8 +87,11 @@ export default function ZoneProApp() {
         updatePomodoro,
         skipToBreak,
         skipToWork,
-        setMode: setPomodoroMode,
+        setViewMode: setPomodoroViewMode,
         setTimerDuration,
+        setWorkTime,
+        setBreakTime,
+        lastStoppedSession,
     } = usePomodoro();
 
     const {
@@ -161,9 +164,12 @@ export default function ZoneProApp() {
         resetPomodoro,
         skipToBreak,
         skipToWork,
-        setMode: setPomodoroMode,
+        setViewMode: setPomodoroViewMode,
         setTimerDuration,
-    }), [pomodoro, startPomodoro, pausePomodoro, resetPomodoro, skipToBreak, skipToWork, setPomodoroMode, setTimerDuration]);
+        setWorkTime,
+        setBreakTime,
+        lastStoppedSession,
+    }), [pomodoro, startPomodoro, pausePomodoro, resetPomodoro, skipToBreak, skipToWork, setPomodoroViewMode, setTimerDuration, setWorkTime, setBreakTime, lastStoppedSession]);
 
     return (
         <UserIdProvider userId={userId}>
@@ -199,7 +205,7 @@ export default function ZoneProApp() {
                     onReset={resetPomodoro}
                     onSkipToBreak={skipToBreak}
                     onSkipToWork={skipToWork}
-                    onSetMode={setPomodoroMode}
+                    onSetViewMode={setPomodoroViewMode}
                     onSetTimerDuration={setTimerDuration}
                 />
                 <MiniMusicPlayer

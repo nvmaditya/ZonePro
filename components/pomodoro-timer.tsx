@@ -21,7 +21,7 @@ interface PomodoroTimerProps {
     onReset: () => void;
     onSkipToBreak: () => void;
     onSkipToWork: () => void;
-    onSetMode: (mode: PomodoroSession["mode"]) => void;
+    onSetViewMode: (mode: PomodoroSession["mode"]) => void;
     onSetTimerDuration: (seconds: number) => void;
 }
 
@@ -32,18 +32,20 @@ export function PomodoroTimer({
     onReset,
     onSkipToBreak,
     onSkipToWork,
-    onSetMode,
+    onSetViewMode,
     onSetTimerDuration,
 }: PomodoroTimerProps) {
-    const mode = pomodoro.mode || "pomodoro";
+    const viewMode = pomodoro.viewMode || pomodoro.mode || "pomodoro";
+    const activeMode = pomodoro.mode || "pomodoro";
+    const isViewingActiveMode = viewMode === activeMode;
 
     return (
         <div className="p-4 space-y-4">
             {/* Mode Tabs */}
             <Tabs
-                value={mode}
+                value={viewMode}
                 onValueChange={(v) =>
-                    onSetMode(v as PomodoroSession["mode"])
+                    onSetViewMode(v as PomodoroSession["mode"])
                 }
             >
                 <TabsList className="w-full">
@@ -52,39 +54,61 @@ export function PomodoroTimer({
                         className="flex-1 text-xs"
                     >
                         Pomodoro
+                        {activeMode === "pomodoro" && pomodoro.isActive && viewMode !== "pomodoro" && (
+                            <span className="ml-1 h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                        )}
                     </TabsTrigger>
                     <TabsTrigger value="timer" className="flex-1 text-xs">
                         Timer
+                        {activeMode === "timer" && pomodoro.isActive && viewMode !== "timer" && (
+                            <span className="ml-1 h-1.5 w-1.5 rounded-full bg-purple-500 animate-pulse" />
+                        )}
                     </TabsTrigger>
                     <TabsTrigger
                         value="stopwatch"
                         className="flex-1 text-xs"
                     >
                         Stopwatch
+                        {activeMode === "stopwatch" && pomodoro.isActive && viewMode !== "stopwatch" && (
+                            <span className="ml-1 h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+                        )}
                     </TabsTrigger>
                 </TabsList>
             </Tabs>
 
+            {/* Active timer running in background notice */}
+            {!isViewingActiveMode && pomodoro.isActive && (
+                <div className="text-xs text-center text-muted-foreground bg-muted/50 rounded-md py-1.5 px-2">
+                    {activeMode.charAt(0).toUpperCase() + activeMode.slice(1)} running ({
+                        activeMode === "stopwatch"
+                            ? formatTime(pomodoro.elapsed || 0)
+                            : formatTime(pomodoro.timeLeft)
+                    })
+                </div>
+            )}
+
             {/* Pomodoro Mode */}
-            {mode === "pomodoro" && (
+            {viewMode === "pomodoro" && (
                 <div className="space-y-3">
                     <div className="text-center">
                         <div className="text-4xl font-mono font-bold text-primary mb-2">
-                            {formatTime(pomodoro.timeLeft)}
+                            {isViewingActiveMode
+                                ? formatTime(pomodoro.timeLeft)
+                                : formatTime(pomodoro.workTime * 60)}
                         </div>
                         <Badge
                             variant={
-                                pomodoro.isBreak ? "secondary" : "default"
+                                isViewingActiveMode && pomodoro.isBreak ? "secondary" : "default"
                             }
                         >
-                            {pomodoro.isBreak ? "Break Time" : "Focus Time"}
+                            {isViewingActiveMode && pomodoro.isBreak ? "Break Time" : "Focus Time"}
                         </Badge>
                     </div>
                     <div className="flex gap-2">
-                        {!pomodoro.isActive ? (
+                        {!(isViewingActiveMode && pomodoro.isActive) ? (
                             <Button onClick={onStart} className="flex-1">
                                 <Play className="w-4 h-4 mr-2" />
-                                Start
+                                {!isViewingActiveMode && pomodoro.isActive ? "Switch & Start" : "Start"}
                             </Button>
                         ) : (
                             <Button
@@ -96,70 +120,76 @@ export function PomodoroTimer({
                                 Pause
                             </Button>
                         )}
-                        <Button onClick={onReset} variant="outline">
+                        <Button onClick={onReset} variant="outline" disabled={!isViewingActiveMode}>
                             <RotateCcw className="w-4 h-4" />
                         </Button>
                     </div>
-                    <div className="flex gap-2 justify-center">
-                        {!pomodoro.isBreak ? (
-                            <Button
-                                onClick={onSkipToBreak}
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs"
-                            >
-                                <SkipForward className="w-3 h-3 mr-1" />
-                                Skip to Break
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={onSkipToWork}
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs"
-                            >
-                                <SkipForward className="w-3 h-3 mr-1" />
-                                Skip to Work
-                            </Button>
-                        )}
-                    </div>
-                    <div className="text-center text-sm text-muted-foreground">
-                        Session {pomodoro.currentSession} of{" "}
-                        {pomodoro.totalSessions}
-                    </div>
+                    {isViewingActiveMode && (
+                        <>
+                            <div className="flex gap-2 justify-center">
+                                {!pomodoro.isBreak ? (
+                                    <Button
+                                        onClick={onSkipToBreak}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-xs"
+                                    >
+                                        <SkipForward className="w-3 h-3 mr-1" />
+                                        Skip to Break
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={onSkipToWork}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-xs"
+                                    >
+                                        <SkipForward className="w-3 h-3 mr-1" />
+                                        Skip to Work
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="text-center text-sm text-muted-foreground">
+                                Session {pomodoro.currentSession} of{" "}
+                                {pomodoro.totalSessions}
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 
             {/* Timer Mode */}
-            {mode === "timer" && (
+            {viewMode === "timer" && (
                 <div className="space-y-3">
-                    {!pomodoro.isActive &&
+                    {(!isViewingActiveMode || (!pomodoro.isActive &&
                         pomodoro.timeLeft ===
-                            (pomodoro.timerDuration || 300) && (
-                            <div className="flex flex-wrap gap-2 justify-center">
-                                {[5, 10, 15, 30, 60].map((min) => (
-                                    <Button
-                                        key={min}
-                                        variant={
-                                            (pomodoro.timerDuration ||
-                                                300) ===
-                                            min * 60
-                                                ? "default"
-                                                : "outline"
-                                        }
-                                        size="sm"
-                                        onClick={() =>
-                                            onSetTimerDuration(min * 60)
-                                        }
-                                    >
-                                        {min}m
-                                    </Button>
-                                ))}
-                            </div>
-                        )}
+                            (pomodoro.timerDuration || 300))) && (
+                        <div className="flex flex-wrap gap-2 justify-center">
+                            {[5, 10, 15, 30, 60].map((min) => (
+                                <Button
+                                    key={min}
+                                    variant={
+                                        (pomodoro.timerDuration ||
+                                            300) ===
+                                        min * 60
+                                            ? "default"
+                                            : "outline"
+                                    }
+                                    size="sm"
+                                    onClick={() =>
+                                        onSetTimerDuration(min * 60)
+                                    }
+                                >
+                                    {min}m
+                                </Button>
+                            ))}
+                        </div>
+                    )}
                     <div className="text-center">
                         <div className="text-4xl font-mono font-bold text-primary mb-2">
-                            {formatTime(pomodoro.timeLeft)}
+                            {isViewingActiveMode
+                                ? formatTime(pomodoro.timeLeft)
+                                : formatTime(pomodoro.timerDuration || 300)}
                         </div>
                         <Badge variant="secondary">
                             <Timer className="w-3 h-3 mr-1" />
@@ -167,10 +197,10 @@ export function PomodoroTimer({
                         </Badge>
                     </div>
                     <div className="flex gap-2">
-                        {!pomodoro.isActive ? (
+                        {!(isViewingActiveMode && pomodoro.isActive) ? (
                             <Button onClick={onStart} className="flex-1">
                                 <Play className="w-4 h-4 mr-2" />
-                                Start
+                                {!isViewingActiveMode && pomodoro.isActive ? "Switch & Start" : "Start"}
                             </Button>
                         ) : (
                             <Button
@@ -182,7 +212,7 @@ export function PomodoroTimer({
                                 Pause
                             </Button>
                         )}
-                        <Button onClick={onReset} variant="outline">
+                        <Button onClick={onReset} variant="outline" disabled={!isViewingActiveMode}>
                             <RotateCcw className="w-4 h-4" />
                         </Button>
                     </div>
@@ -190,11 +220,13 @@ export function PomodoroTimer({
             )}
 
             {/* Stopwatch Mode */}
-            {mode === "stopwatch" && (
+            {viewMode === "stopwatch" && (
                 <div className="space-y-3">
                     <div className="text-center">
                         <div className="text-4xl font-mono font-bold text-primary mb-2">
-                            {formatTime(pomodoro.elapsed || 0)}
+                            {isViewingActiveMode
+                                ? formatTime(pomodoro.elapsed || 0)
+                                : formatTime(0)}
                         </div>
                         <Badge variant="secondary">
                             <StopCircle className="w-3 h-3 mr-1" />
@@ -202,10 +234,10 @@ export function PomodoroTimer({
                         </Badge>
                     </div>
                     <div className="flex gap-2">
-                        {!pomodoro.isActive ? (
+                        {!(isViewingActiveMode && pomodoro.isActive) ? (
                             <Button onClick={onStart} className="flex-1">
                                 <Play className="w-4 h-4 mr-2" />
-                                Start
+                                {!isViewingActiveMode && pomodoro.isActive ? "Switch & Start" : "Start"}
                             </Button>
                         ) : (
                             <Button
@@ -217,7 +249,7 @@ export function PomodoroTimer({
                                 Pause
                             </Button>
                         )}
-                        <Button onClick={onReset} variant="outline">
+                        <Button onClick={onReset} variant="outline" disabled={!isViewingActiveMode}>
                             <RotateCcw className="w-4 h-4" />
                         </Button>
                     </div>

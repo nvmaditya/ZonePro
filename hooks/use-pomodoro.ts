@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import type { PomodoroSession } from "@/types";
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { PomodoroSession, PomodoroMode } from "@/types";
 import {
     DEFAULT_WORK_TIME,
     DEFAULT_BREAK_TIME,
     DEFAULT_TOTAL_SESSIONS,
 } from "@/lib/constants";
+
+export interface StoppedSessionInfo {
+    mode: PomodoroMode;
+    elapsed: number; // seconds actually spent
+    startedAt: string;
+}
 
 export const DEFAULT_POMODORO: PomodoroSession = {
     workTime: DEFAULT_WORK_TIME,
@@ -17,13 +23,25 @@ export const DEFAULT_POMODORO: PomodoroSession = {
     isBreak: false,
     timeLeft: DEFAULT_WORK_TIME * 60,
     mode: "pomodoro",
+    viewMode: "pomodoro",
     elapsed: 0,
 };
+
+function getElapsedForMode(p: PomodoroSession): number {
+    if (p.mode === "stopwatch") return p.elapsed || 0;
+    if (p.mode === "timer") return (p.timerDuration || 300) - p.timeLeft;
+    // pomodoro
+    const totalSeconds = p.isBreak ? p.breakTime * 60 : p.workTime * 60;
+    return totalSeconds - p.timeLeft;
+}
 
 export function usePomodoro(initial?: PomodoroSession) {
     const [pomodoro, setPomodoro] = useState<PomodoroSession>(
         initial || DEFAULT_POMODORO,
     );
+
+    // Ref to expose stopped session info when mode-switching while active
+    const lastStoppedSession = useRef<StoppedSessionInfo | null>(null);
 
     // Timer Logic -- handles all three modes
     useEffect(() => {
@@ -78,20 +96,60 @@ export function usePomodoro(initial?: PomodoroSession) {
 
     const startPomodoro = useCallback(() => {
         setPomodoro((prev) => {
-            if (prev.mode === "stopwatch") {
-                return { ...prev, isActive: true };
+            const activeView = prev.viewMode || prev.mode;
+
+            // If viewMode matches mode, just resume the current timer
+            if (activeView === prev.mode) {
+                if (prev.mode === "stopwatch") {
+                    return {
+                        ...prev,
+                        isActive: true,
+                        startedAt: prev.startedAt || new Date().toISOString(),
+                    };
+                }
+                return {
+                    ...prev,
+                    isActive: true,
+                    startedAt: prev.startedAt || new Date().toISOString(),
+                    timeLeft:
+                        prev.timeLeft === 0
+                            ? prev.mode === "timer"
+                                ? prev.timerDuration || 300
+                                : prev.isBreak
+                                  ? prev.breakTime * 60
+                                  : prev.workTime * 60
+                            : prev.timeLeft,
+                };
             }
+
+            // Mode promotion: switching to a different mode
+            // Record the old session if it was active or had progress
+            const elapsed = getElapsedForMode(prev);
+            if ((prev.isActive || elapsed > 0) && prev.startedAt) {
+                lastStoppedSession.current = {
+                    mode: prev.mode,
+                    elapsed,
+                    startedAt: prev.startedAt,
+                };
+            }
+
+            const newMode = activeView;
+            const now = new Date().toISOString();
             return {
                 ...prev,
+                mode: newMode,
+                viewMode: newMode,
                 isActive: true,
+                isBreak: false,
+                startedAt: now,
                 timeLeft:
-                    prev.timeLeft === 0
-                        ? prev.mode === "timer"
-                            ? prev.timerDuration || 300
-                            : prev.isBreak
-                              ? prev.breakTime * 60
-                              : prev.workTime * 60
-                        : prev.timeLeft,
+                    newMode === "pomodoro"
+                        ? prev.workTime * 60
+                        : newMode === "timer"
+                          ? prev.timerDuration || 300
+                          : 0,
+                elapsed: 0,
+                currentSession: newMode === "pomodoro" ? 1 : prev.currentSession,
             };
         });
     }, []);
@@ -103,13 +161,14 @@ export function usePomodoro(initial?: PomodoroSession) {
     const resetPomodoro = useCallback(() => {
         setPomodoro((prev) => {
             if (prev.mode === "stopwatch") {
-                return { ...prev, isActive: false, elapsed: 0 };
+                return { ...prev, isActive: false, elapsed: 0, startedAt: undefined };
             }
             if (prev.mode === "timer") {
                 return {
                     ...prev,
                     isActive: false,
                     timeLeft: prev.timerDuration || 300,
+                    startedAt: undefined,
                 };
             }
             return {
@@ -118,6 +177,7 @@ export function usePomodoro(initial?: PomodoroSession) {
                 isBreak: false,
                 timeLeft: prev.workTime * 60,
                 currentSession: 1,
+                startedAt: undefined,
             };
         });
     }, []);
@@ -147,21 +207,9 @@ export function usePomodoro(initial?: PomodoroSession) {
         }));
     }, []);
 
-    const setMode = useCallback((mode: PomodoroSession["mode"]) => {
-        setPomodoro((prev) => ({
-            ...prev,
-            mode,
-            isActive: false,
-            isBreak: false,
-            timeLeft:
-                mode === "pomodoro"
-                    ? prev.workTime * 60
-                    : mode === "timer"
-                      ? prev.timerDuration || 300
-                      : 0,
-            elapsed: 0,
-            currentSession: 1,
-        }));
+    // setViewMode only changes the UI tab, does NOT stop the running timer
+    const setViewMode = useCallback((viewMode: PomodoroSession["mode"]) => {
+        setPomodoro((prev) => ({ ...prev, viewMode }));
     }, []);
 
     const setTimerDuration = useCallback((seconds: number) => {
@@ -170,6 +218,23 @@ export function usePomodoro(initial?: PomodoroSession) {
             timerDuration: seconds,
             timeLeft: seconds,
             isActive: false,
+            startedAt: undefined,
+        }));
+    }, []);
+
+    const setWorkTime = useCallback((minutes: number) => {
+        setPomodoro((prev) => ({
+            ...prev,
+            workTime: minutes,
+            ...(!prev.isActive && !prev.isBreak ? { timeLeft: minutes * 60 } : {}),
+        }));
+    }, []);
+
+    const setBreakTime = useCallback((minutes: number) => {
+        setPomodoro((prev) => ({
+            ...prev,
+            breakTime: minutes,
+            ...(prev.isBreak && !prev.isActive ? { timeLeft: minutes * 60 } : {}),
         }));
     }, []);
 
@@ -182,7 +247,10 @@ export function usePomodoro(initial?: PomodoroSession) {
         updatePomodoro,
         skipToBreak,
         skipToWork,
-        setMode,
+        setViewMode,
         setTimerDuration,
+        setWorkTime,
+        setBreakTime,
+        lastStoppedSession,
     };
 }
