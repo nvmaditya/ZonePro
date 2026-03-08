@@ -33,7 +33,7 @@ export function NotesSection() {
     };
 
     return (
-        <div className="h-[calc(100vh-8rem)]">
+        <div className="h-full">
             <ResizablePanelGroup direction="horizontal" className="rounded-lg border">
                 <ResizablePanel defaultSize={35} minSize={25}>
                     <NoteList
