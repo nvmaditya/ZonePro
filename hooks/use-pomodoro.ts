@@ -16,6 +16,8 @@ export const DEFAULT_POMODORO: PomodoroSession = {
     isActive: false,
     isBreak: false,
     timeLeft: DEFAULT_WORK_TIME * 60,
+    mode: "pomodoro",
+    elapsed: 0,
 };
 
 export function usePomodoro(initial?: PomodoroSession) {
@@ -23,54 +25,75 @@ export function usePomodoro(initial?: PomodoroSession) {
         initial || DEFAULT_POMODORO,
     );
 
-    // Pomodoro Timer Logic
+    // Timer Logic -- handles all three modes
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        if (pomodoro.isActive && pomodoro.timeLeft > 0) {
+        if (pomodoro.isActive) {
             interval = setInterval(() => {
-                setPomodoro((prev) => ({
-                    ...prev,
-                    timeLeft: prev.timeLeft - 1,
-                }));
-            }, 1000);
-        } else if (pomodoro.isActive && pomodoro.timeLeft === 0) {
-            setPomodoro((prev) => {
-                if (prev.isBreak && prev.currentSession >= prev.totalSessions) {
+                setPomodoro((prev) => {
+                    // Stopwatch mode: count up
+                    if (prev.mode === "stopwatch") {
+                        return { ...prev, elapsed: (prev.elapsed || 0) + 1 };
+                    }
+
+                    // Countdown for "pomodoro" and "timer" modes
+                    if (prev.timeLeft > 0) {
+                        return { ...prev, timeLeft: prev.timeLeft - 1 };
+                    }
+
+                    // timeLeft === 0
+                    if (prev.mode === "timer") {
+                        return { ...prev, isActive: false };
+                    }
+
+                    // Pomodoro mode: break/work transition
+                    if (
+                        prev.isBreak &&
+                        prev.currentSession >= prev.totalSessions
+                    ) {
+                        return {
+                            ...prev,
+                            isActive: false,
+                            isBreak: false,
+                            timeLeft: prev.workTime * 60,
+                            currentSession: prev.totalSessions,
+                        };
+                    }
                     return {
                         ...prev,
                         isActive: false,
-                        isBreak: false,
-                        timeLeft: prev.workTime * 60,
-                        currentSession: prev.totalSessions,
+                        isBreak: !prev.isBreak,
+                        timeLeft: prev.isBreak
+                            ? prev.workTime * 60
+                            : prev.breakTime * 60,
+                        currentSession: prev.isBreak
+                            ? prev.currentSession + 1
+                            : prev.currentSession,
                     };
-                }
-                return {
-                    ...prev,
-                    isActive: false,
-                    isBreak: !prev.isBreak,
-                    timeLeft: prev.isBreak
-                        ? prev.workTime * 60
-                        : prev.breakTime * 60,
-                    currentSession: prev.isBreak
-                        ? prev.currentSession + 1
-                        : prev.currentSession,
-                };
-            });
+                });
+            }, 1000);
         }
         return () => clearInterval(interval);
-    }, [pomodoro.isActive, pomodoro.timeLeft]);
+    }, [pomodoro.isActive]);
 
     const startPomodoro = useCallback(() => {
-        setPomodoro((prev) => ({
-            ...prev,
-            isActive: true,
-            timeLeft:
-                prev.timeLeft === 0
-                    ? prev.isBreak
-                        ? prev.breakTime * 60
-                        : prev.workTime * 60
-                    : prev.timeLeft,
-        }));
+        setPomodoro((prev) => {
+            if (prev.mode === "stopwatch") {
+                return { ...prev, isActive: true };
+            }
+            return {
+                ...prev,
+                isActive: true,
+                timeLeft:
+                    prev.timeLeft === 0
+                        ? prev.mode === "timer"
+                            ? prev.timerDuration || 300
+                            : prev.isBreak
+                              ? prev.breakTime * 60
+                              : prev.workTime * 60
+                        : prev.timeLeft,
+            };
+        });
     }, []);
 
     const pausePomodoro = useCallback(() => {
@@ -78,17 +101,76 @@ export function usePomodoro(initial?: PomodoroSession) {
     }, []);
 
     const resetPomodoro = useCallback(() => {
+        setPomodoro((prev) => {
+            if (prev.mode === "stopwatch") {
+                return { ...prev, isActive: false, elapsed: 0 };
+            }
+            if (prev.mode === "timer") {
+                return {
+                    ...prev,
+                    isActive: false,
+                    timeLeft: prev.timerDuration || 300,
+                };
+            }
+            return {
+                ...prev,
+                isActive: false,
+                isBreak: false,
+                timeLeft: prev.workTime * 60,
+                currentSession: 1,
+            };
+        });
+    }, []);
+
+    const updatePomodoro = useCallback((updates: Partial<PomodoroSession>) => {
+        setPomodoro((prev) => ({ ...prev, ...updates }));
+    }, []);
+
+    const skipToBreak = useCallback(() => {
+        setPomodoro((prev) => ({
+            ...prev,
+            isActive: false,
+            isBreak: true,
+            timeLeft: prev.breakTime * 60,
+        }));
+    }, []);
+
+    const skipToWork = useCallback(() => {
         setPomodoro((prev) => ({
             ...prev,
             isActive: false,
             isBreak: false,
             timeLeft: prev.workTime * 60,
+            currentSession: prev.isBreak
+                ? prev.currentSession + 1
+                : prev.currentSession,
+        }));
+    }, []);
+
+    const setMode = useCallback((mode: PomodoroSession["mode"]) => {
+        setPomodoro((prev) => ({
+            ...prev,
+            mode,
+            isActive: false,
+            isBreak: false,
+            timeLeft:
+                mode === "pomodoro"
+                    ? prev.workTime * 60
+                    : mode === "timer"
+                      ? prev.timerDuration || 300
+                      : 0,
+            elapsed: 0,
             currentSession: 1,
         }));
     }, []);
 
-    const updatePomodoro = useCallback((updates: Partial<PomodoroSession>) => {
-        setPomodoro((prev) => ({ ...prev, ...updates }));
+    const setTimerDuration = useCallback((seconds: number) => {
+        setPomodoro((prev) => ({
+            ...prev,
+            timerDuration: seconds,
+            timeLeft: seconds,
+            isActive: false,
+        }));
     }, []);
 
     return {
@@ -98,5 +180,9 @@ export function usePomodoro(initial?: PomodoroSession) {
         pausePomodoro,
         resetPomodoro,
         updatePomodoro,
+        skipToBreak,
+        skipToWork,
+        setMode,
+        setTimerDuration,
     };
 }

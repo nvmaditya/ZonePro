@@ -50,6 +50,9 @@ export interface PomodoroSession {
     isActive: boolean;
     isBreak: boolean;
     timeLeft: number;
+    mode: "pomodoro" | "timer" | "stopwatch";
+    timerDuration?: number;
+    elapsed?: number;
 }
 
 export interface MusicTrack {

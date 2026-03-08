@@ -64,6 +64,10 @@ export default function ZoneProApp() {
         pausePomodoro,
         resetPomodoro,
         updatePomodoro,
+        skipToBreak,
+        skipToWork,
+        setMode: setPomodoroMode,
+        setTimerDuration,
     } = usePomodoro();
 
     const {
@@ -207,6 +211,10 @@ export default function ZoneProApp() {
                         startPomodoro={startPomodoro}
                         pausePomodoro={pausePomodoro}
                         resetPomodoro={resetPomodoro}
+                        skipToBreak={skipToBreak}
+                        skipToWork={skipToWork}
+                        setPomodoroMode={setPomodoroMode}
+                        setTimerDuration={setTimerDuration}
                         settings={settings}
                         handleMusicControl={handleMusicControl}
                         musicWasPlaying={musicWasPlaying}

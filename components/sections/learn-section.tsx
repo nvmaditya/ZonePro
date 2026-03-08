@@ -28,6 +28,10 @@ interface LearnSectionProps {
     startPomodoro: () => void;
     pausePomodoro: () => void;
     resetPomodoro: () => void;
+    skipToBreak: () => void;
+    skipToWork: () => void;
+    setPomodoroMode: (mode: PomodoroSession["mode"]) => void;
+    setTimerDuration: (seconds: number) => void;
     settings: { autoMusicPause: boolean };
     handleMusicControl: (action: "pause" | "play") => void;
     musicWasPlaying: boolean;
@@ -53,6 +57,10 @@ export function LearnSection({
     startPomodoro,
     pausePomodoro,
     resetPomodoro,
+    skipToBreak,
+    skipToWork,
+    setPomodoroMode,
+    setTimerDuration,
     settings,
     handleMusicControl,
     musicWasPlaying,
@@ -152,6 +160,10 @@ export function LearnSection({
                         onStart={startPomodoro}
                         onPause={pausePomodoro}
                         onReset={resetPomodoro}
+                        onSkipToBreak={skipToBreak}
+                        onSkipToWork={skipToWork}
+                        onSetMode={setPomodoroMode}
+                        onSetTimerDuration={setTimerDuration}
                     />
                 </div>
             </div>
