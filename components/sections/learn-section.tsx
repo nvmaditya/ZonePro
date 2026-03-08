@@ -2,71 +2,33 @@
 
 import { CoursePlayer } from "@/components/course-player";
 import { CourseList } from "@/components/course-list";
-import { PomodoroTimer } from "@/components/pomodoro-timer";
 import { YouTubePlaylist } from "@/components/youtube-playlist";
 import { AddCourseDialog } from "@/components/add-course-dialog";
 import { SyncStatusIndicator } from "@/components/sync-status";
-import type { CourseProgress, PomodoroSession } from "@/types";
-import type { SyncStatus } from "@/hooks/use-cloud-sync";
+import { useLearn } from "@/contexts/learn-context";
 
-interface LearnSectionProps {
-    isYTReady: boolean;
-    courses: CourseProgress[];
-    currentCourse: CourseProgress | null;
-    setCurrentCourse: (course: CourseProgress | null) => void;
-    newCourseUrl: string;
-    setNewCourseUrl: (url: string) => void;
-    newCourseTitle: string;
-    setNewCourseTitle: (title: string) => void;
-    showAddCourse: boolean;
-    setShowAddCourse: (open: boolean) => void;
-    addCourse: () => void;
-    selectCourse: (course: CourseProgress) => void;
-    updateCourse: (courseId: string, updates: Partial<CourseProgress>) => void;
-    deleteCourse: (courseId: string) => void;
-    pomodoro: PomodoroSession;
-    startPomodoro: () => void;
-    pausePomodoro: () => void;
-    resetPomodoro: () => void;
-    skipToBreak: () => void;
-    skipToWork: () => void;
-    setPomodoroMode: (mode: PomodoroSession["mode"]) => void;
-    setTimerDuration: (seconds: number) => void;
-    settings: { autoMusicPause: boolean };
-    handleMusicControl: (action: "pause" | "play") => void;
-    musicWasPlaying: boolean;
-    setMusicWasPlaying: (v: boolean) => void;
-    syncStatus: SyncStatus;
-}
+export function LearnSection() {
+    const {
+        isYTReady,
+        courses,
+        currentCourse,
+        newCourseUrl,
+        setNewCourseUrl,
+        newCourseTitle,
+        setNewCourseTitle,
+        showAddCourse,
+        setShowAddCourse,
+        addCourse,
+        selectCourse,
+        updateCourse,
+        deleteCourse,
+        settings,
+        handleMusicControl,
+        musicWasPlaying,
+        setMusicWasPlaying,
+        syncStatus,
+    } = useLearn();
 
-export function LearnSection({
-    isYTReady,
-    courses,
-    currentCourse,
-    newCourseUrl,
-    setNewCourseUrl,
-    newCourseTitle,
-    setNewCourseTitle,
-    showAddCourse,
-    setShowAddCourse,
-    addCourse,
-    selectCourse,
-    updateCourse,
-    deleteCourse,
-    pomodoro,
-    startPomodoro,
-    pausePomodoro,
-    resetPomodoro,
-    skipToBreak,
-    skipToWork,
-    setPomodoroMode,
-    setTimerDuration,
-    settings,
-    handleMusicControl,
-    musicWasPlaying,
-    setMusicWasPlaying,
-    syncStatus,
-}: LearnSectionProps) {
     return (
         <div>
             <div className="flex items-center gap-2 mb-4">
@@ -154,17 +116,6 @@ export function LearnSection({
                             }}
                         />
                     )}
-
-                    <PomodoroTimer
-                        pomodoro={pomodoro}
-                        onStart={startPomodoro}
-                        onPause={pausePomodoro}
-                        onReset={resetPomodoro}
-                        onSkipToBreak={skipToBreak}
-                        onSkipToWork={skipToWork}
-                        onSetMode={setPomodoroMode}
-                        onSetTimerDuration={setTimerDuration}
-                    />
                 </div>
             </div>
 
