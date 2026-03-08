@@ -57,14 +57,24 @@ export function DashboardTaskStats({ tasks }: DashboardTaskStatsProps) {
                             fontSize={12}
                             tickLine={false}
                             axisLine={false}
+                            tick={{ fill: "hsl(var(--muted-foreground))" }}
                         />
                         <YAxis
                             fontSize={12}
                             tickLine={false}
                             axisLine={false}
                             allowDecimals={false}
+                            tick={{ fill: "hsl(var(--muted-foreground))" }}
                         />
-                        <Tooltip />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: "hsl(var(--popover))",
+                                border: "1px solid hsl(var(--border))",
+                                borderRadius: "8px",
+                                color: "hsl(var(--popover-foreground))",
+                            }}
+                            labelStyle={{ color: "hsl(var(--muted-foreground))" }}
+                        />
                         <Bar
                             dataKey="count"
                             fill="hsl(var(--primary))"

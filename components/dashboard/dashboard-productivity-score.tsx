@@ -74,13 +74,23 @@ export function DashboardProductivityScore({
                             tickLine={false}
                             axisLine={false}
                             interval={6}
+                            tick={{ fill: "hsl(var(--muted-foreground))" }}
                         />
                         <YAxis
                             fontSize={10}
                             tickLine={false}
                             axisLine={false}
+                            tick={{ fill: "hsl(var(--muted-foreground))" }}
                         />
-                        <Tooltip />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: "hsl(var(--popover))",
+                                border: "1px solid hsl(var(--border))",
+                                borderRadius: "8px",
+                                color: "hsl(var(--popover-foreground))",
+                            }}
+                            labelStyle={{ color: "hsl(var(--muted-foreground))" }}
+                        />
                         <Line
                             type="monotone"
                             dataKey="score"
