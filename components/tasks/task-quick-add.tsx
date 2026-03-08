@@ -7,9 +7,14 @@ import { Plus } from "lucide-react";
 interface TaskQuickAddProps {
     onAdd: (title: string) => void;
     autoFocus?: boolean;
+    registerRef?: (ref: HTMLInputElement | null) => void;
 }
 
-export function TaskQuickAdd({ onAdd, autoFocus }: TaskQuickAddProps) {
+export function TaskQuickAdd({
+    onAdd,
+    autoFocus,
+    registerRef,
+}: TaskQuickAddProps) {
     const [title, setTitle] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -18,6 +23,13 @@ export function TaskQuickAdd({ onAdd, autoFocus }: TaskQuickAddProps) {
             inputRef.current.focus();
         }
     }, [autoFocus]);
+
+    useEffect(() => {
+        if (registerRef) {
+            registerRef(inputRef.current);
+            return () => registerRef(null);
+        }
+    }, [registerRef]);
 
     const handleSubmit = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && title.trim()) {

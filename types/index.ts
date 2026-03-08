@@ -42,6 +42,8 @@ export interface CourseProgress {
     playlistMetadata?: PlaylistMetadata; // Store playlist info
 }
 
+export type PomodoroMode = "pomodoro" | "timer" | "stopwatch";
+
 export interface PomodoroSession {
     workTime: number;
     breakTime: number;
@@ -50,7 +52,7 @@ export interface PomodoroSession {
     isActive: boolean;
     isBreak: boolean;
     timeLeft: number;
-    mode: "pomodoro" | "timer" | "stopwatch";
+    mode: PomodoroMode;
     timerDuration?: number;
     elapsed?: number;
 }
@@ -78,9 +80,7 @@ export interface SessionData {
     courses: CourseProgress[];
     pomodoro: PomodoroSession;
     music: MusicPlayer;
-    settings: {
-        autoMusicPause: boolean;
-    };
+    settings: AppSettings;
     timestamp: Date;
 }
 

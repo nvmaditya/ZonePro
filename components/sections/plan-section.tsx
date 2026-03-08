@@ -1,21 +1,30 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import {
+    useAppTasks,
+    useAppFocus,
+    useAppHabits,
+} from "@/contexts/app-data-context";
 import { usePlanning } from "@/hooks/use-planning";
 import { PlanDailyTop3 } from "@/components/plan/plan-daily-top3";
 import { PlanGoals } from "@/components/plan/plan-goals";
 import { PlanWeeklyReview } from "@/components/plan/plan-weekly-review";
-import type { Task, FocusSession, HabitLog } from "@/types";
 
 export function PlanSection() {
-    const { value: tasks } = useLocalStorage<Task[]>("zonepro-tasks", []);
-    const { value: sessions } = useLocalStorage<FocusSession[]>("zonepro-focus-sessions", []);
-    const { value: habitLogs } = useLocalStorage<HabitLog[]>("zonepro-habit-logs", []);
+    const { tasks } = useAppTasks();
+    const { sessions } = useAppFocus();
+    const { habitLogs } = useAppHabits();
 
     const {
-        activeGoals, addGoal, updateGoal, deleteGoal, addMilestone, toggleMilestone,
-        getTodayPriorities, setTodayPriorities,
+        activeGoals,
+        addGoal,
+        updateGoal,
+        deleteGoal,
+        addMilestone,
+        toggleMilestone,
+        getTodayPriorities,
+        setTodayPriorities,
     } = usePlanning();
 
     const priorityTaskIds = getTodayPriorities();

@@ -10,9 +10,18 @@ import {
     CommandSeparator,
 } from "@/components/ui/command";
 import {
-    BookOpen, CheckSquare, Timer, Flame, FileText, BarChart3, Target,
-    Plus, Play, Search,
+    BookOpen,
+    CheckSquare,
+    Timer,
+    Flame,
+    FileText,
+    BarChart3,
+    Target,
+    Plus,
+    Play,
+    Search,
 } from "lucide-react";
+import { useAppData } from "@/contexts/app-data-context";
 
 interface CommandPaletteProps {
     open: boolean;
@@ -27,11 +36,23 @@ const NAV_ITEMS = [
     { id: "focus", label: "Go to Focus", icon: Timer, shortcut: "3" },
     { id: "habits", label: "Go to Habits", icon: Flame, shortcut: "4" },
     { id: "notes", label: "Go to Notes", icon: FileText, shortcut: "5" },
-    { id: "dashboard", label: "Go to Dashboard", icon: BarChart3, shortcut: "6" },
+    {
+        id: "dashboard",
+        label: "Go to Dashboard",
+        icon: BarChart3,
+        shortcut: "6",
+    },
     { id: "plan", label: "Go to Plan", icon: Target, shortcut: "7" },
 ];
 
-export function CommandPalette({ open, onOpenChange, onNavigate, onQuickAddTask }: CommandPaletteProps) {
+export function CommandPalette({
+    open,
+    onOpenChange,
+    onNavigate,
+    onQuickAddTask,
+}: CommandPaletteProps) {
+    const { focusQuickAdd } = useAppData();
+
     const handleSelect = (action: string) => {
         onOpenChange(false);
 
@@ -39,6 +60,8 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onQuickAddTask 
             onNavigate(action.replace("nav:", ""));
         } else if (action === "quick-add-task") {
             onQuickAddTask();
+            // Focus the quick-add input after navigating to Tasks
+            setTimeout(() => focusQuickAdd(), 100);
         }
     };
 
@@ -49,7 +72,9 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onQuickAddTask 
                 <CommandEmpty>No results found.</CommandEmpty>
 
                 <CommandGroup heading="Actions">
-                    <CommandItem onSelect={() => handleSelect("quick-add-task")}>
+                    <CommandItem
+                        onSelect={() => handleSelect("quick-add-task")}
+                    >
                         <Plus className="mr-2 h-4 w-4" />
                         Add New Task
                         <CommandShortcut>Ctrl+N</CommandShortcut>
@@ -59,8 +84,11 @@ export function CommandPalette({ open, onOpenChange, onNavigate, onQuickAddTask 
                 <CommandSeparator />
 
                 <CommandGroup heading="Navigation">
-                    {NAV_ITEMS.map(item => (
-                        <CommandItem key={item.id} onSelect={() => handleSelect(`nav:${item.id}`)}>
+                    {NAV_ITEMS.map((item) => (
+                        <CommandItem
+                            key={item.id}
+                            onSelect={() => handleSelect(`nav:${item.id}`)}
+                        >
                             <item.icon className="mr-2 h-4 w-4" />
                             {item.label}
                             <CommandShortcut>{item.shortcut}</CommandShortcut>

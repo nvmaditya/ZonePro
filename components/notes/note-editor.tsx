@@ -7,6 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     Pin,
     PinOff,
     Archive,
@@ -15,7 +22,9 @@ import {
     X,
     Pencil,
     Eye,
+    Link,
 } from "lucide-react";
+import { useAppTasks } from "@/contexts/app-data-context";
 import type { Note } from "@/types";
 
 interface NoteEditorProps {
@@ -35,7 +44,8 @@ export function NoteEditor({
 }: NoteEditorProps) {
     const [newTag, setNewTag] = useState("");
     const [previewMode, setPreviewMode] = useState(false);
-    const debounceRef = useRef<NodeJS.Timeout>();
+    const debounceRef = useRef<NodeJS.Timeout>(undefined);
+    const { tasks } = useAppTasks();
 
     const handleContentChange = (content: string) => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -57,6 +67,19 @@ export function NoteEditor({
 
     const handleRemoveTag = (tag: string) => {
         onUpdate(note.id, { tags: note.tags.filter((t) => t !== tag) });
+    };
+
+    const linkedTaskIds = note.linkedTaskIds || [];
+    const linkedTasks = tasks.filter((t) => linkedTaskIds.includes(t.id));
+    const unlinkableTaskIds = new Set(linkedTaskIds);
+    const availableTasks = tasks.filter((t) => !unlinkableTaskIds.has(t.id) && !t.parentId);
+
+    const handleLinkTask = (taskId: string) => {
+        onUpdate(note.id, { linkedTaskIds: [...linkedTaskIds, taskId] });
+    };
+
+    const handleUnlinkTask = (taskId: string) => {
+        onUpdate(note.id, { linkedTaskIds: linkedTaskIds.filter((id) => id !== taskId) });
     };
 
     return (
@@ -149,6 +172,33 @@ export function NoteEditor({
                         className="h-6 w-24 text-xs border-dashed"
                     />
                 </div>
+            </div>
+
+            {/* Linked Tasks */}
+            <div className="px-4 py-1 flex flex-wrap items-center gap-1">
+                <Link className="w-3.5 h-3.5 text-muted-foreground mr-1" />
+                {linkedTasks.map((task) => (
+                    <Badge key={task.id} variant="outline" className="gap-1 text-xs">
+                        {task.title}
+                        <button onClick={() => handleUnlinkTask(task.id)}>
+                            <X className="w-3 h-3" />
+                        </button>
+                    </Badge>
+                ))}
+                {availableTasks.length > 0 && (
+                    <Select onValueChange={handleLinkTask}>
+                        <SelectTrigger className="h-6 w-32 text-xs border-dashed">
+                            <SelectValue placeholder="Link task..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableTasks.map((task) => (
+                                <SelectItem key={task.id} value={task.id}>
+                                    {task.title}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
             </div>
 
             {/* Content */}

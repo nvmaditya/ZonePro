@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTasks } from "@/hooks/use-tasks";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useAppTasks, useAppData } from "@/contexts/app-data-context";
 import { TaskQuickAdd } from "@/components/tasks/task-quick-add";
 import { TaskListView } from "@/components/tasks/task-list-view";
 import { TaskKanbanView } from "@/components/tasks/task-kanban-view";
@@ -15,6 +21,7 @@ import type { Task } from "@/types";
 
 export function TasksSection() {
     const {
+        tasks,
         filteredTasks,
         tasksByStatus,
         tasksByDate,
@@ -29,13 +36,18 @@ export function TasksSection() {
         toggleStatus,
         moveTask,
         getSubtasks,
-    } = useTasks();
+    } = useAppTasks();
+    const { registerQuickAddRef } = useAppData();
 
-    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [detailOpen, setDetailOpen] = useState(false);
 
+    const selectedTask = selectedTaskId
+        ? (tasks.find((t) => t.id === selectedTaskId) ?? null)
+        : null;
+
     const handleTaskClick = (task: Task) => {
-        setSelectedTask(task);
+        setSelectedTaskId(task.id);
         setDetailOpen(true);
     };
 
@@ -46,7 +58,7 @@ export function TasksSection() {
     return (
         <div className="space-y-4">
             {/* Quick Add */}
-            <TaskQuickAdd onAdd={quickAddTask} autoFocus />
+            <TaskQuickAdd onAdd={quickAddTask} autoFocus registerRef={registerQuickAddRef} />
 
             {/* Search & Sort */}
             <div className="flex items-center gap-3">
@@ -54,12 +66,17 @@ export function TasksSection() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                         value={filters.search}
-                        onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                        onChange={(e) =>
+                            setFilters({ ...filters, search: e.target.value })
+                        }
                         placeholder="Search tasks..."
                         className="pl-9"
                     />
                 </div>
-                <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+                <Select
+                    value={sortBy}
+                    onValueChange={(v) => setSortBy(v as typeof sortBy)}
+                >
                     <SelectTrigger className="w-[140px]">
                         <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
@@ -105,6 +122,8 @@ export function TasksSection() {
                     <TaskCalendarView
                         tasksByDate={tasksByDate}
                         onClick={handleTaskClick}
+                        onToggle={toggleStatus}
+                        onDelete={deleteTask}
                     />
                 </TabsContent>
             </Tabs>
@@ -113,7 +132,10 @@ export function TasksSection() {
             <TaskDetailSheet
                 task={selectedTask}
                 open={detailOpen}
-                onOpenChange={setDetailOpen}
+                onOpenChange={(open) => {
+                    setDetailOpen(open);
+                    if (!open) setSelectedTaskId(null);
+                }}
                 onUpdate={updateTask}
                 onDelete={deleteTask}
                 subtasks={selectedTask ? getSubtasks(selectedTask.id) : []}

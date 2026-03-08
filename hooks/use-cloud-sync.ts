@@ -10,13 +10,18 @@ import {
     syncMusicToCloud,
     fetchMusicFromCloud,
 } from "@/lib/supabase/sync";
-import type { CourseProgress, PomodoroSession, MusicPlayer } from "@/types";
+import type {
+    CourseProgress,
+    PomodoroSession,
+    MusicPlayer,
+    AppSettings,
+} from "@/types";
 
 interface CloudSyncState {
     courses: CourseProgress[];
     pomodoro: PomodoroSession;
     musicPlayer: MusicPlayer;
-    settings: { autoMusicPause: boolean };
+    settings: AppSettings;
 }
 
 interface CloudSyncSetters {
@@ -27,9 +32,7 @@ interface CloudSyncSetters {
     ) => void;
     setPomodoro: React.Dispatch<React.SetStateAction<PomodoroSession>>;
     setMusicPlayer: React.Dispatch<React.SetStateAction<MusicPlayer>>;
-    setSettings: React.Dispatch<
-        React.SetStateAction<{ autoMusicPause: boolean }>
-    >;
+    setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
 }
 
 export type SyncStatus = "idle" | "syncing" | "synced" | "error";
@@ -90,9 +93,10 @@ export function useCloudSync(
                 }
 
                 if (cloudSettings) {
-                    setters.setSettings({
+                    setters.setSettings((prev) => ({
+                        ...prev,
                         autoMusicPause: cloudSettings.settings.autoMusicPause,
-                    });
+                    }));
                     setters.setPomodoro((prev) => ({
                         ...prev,
                         workTime: cloudSettings.pomodoro.workTime,

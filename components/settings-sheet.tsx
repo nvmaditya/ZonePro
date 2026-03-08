@@ -7,7 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Sheet,
     SheetContent,
@@ -17,7 +25,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import {
-    Menu,
+    Settings,
     Download,
     Upload,
     Check,
@@ -34,17 +42,16 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { STORAGE_KEY } from "@/lib/constants";
-import type { PomodoroSession } from "@/types";
+import { ALL_STORAGE_KEYS, STORAGE_KEY } from "@/lib/constants";
+import { useUserId } from "@/contexts/user-id-context";
+import type { PomodoroSession, AppSettings } from "@/types";
 
 interface SettingsSheetProps {
-    settings: {
-        autoMusicPause: boolean;
-    };
+    settings: AppSettings;
     pomodoro: PomodoroSession;
     coursesCount: number;
     musicTracksCount: number;
-    onUpdateSettings: (updates: any) => void;
+    onUpdateSettings: (updates: Partial<AppSettings>) => void;
     onUpdatePomodoro: (updates: Partial<PomodoroSession>) => void;
     onExportSession: () => void;
     onImportSession: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -60,7 +67,9 @@ export function SettingsSheet({
     onExportSession,
     onImportSession,
 }: SettingsSheetProps) {
-    // Local state for all settings
+    const { userId } = useUserId();
+
+    // Local state for pomodoro settings
     const [localSettings, setLocalSettings] = useState({
         workTime: pomodoro.workTime,
         breakTime: pomodoro.breakTime,
@@ -108,9 +117,17 @@ export function SettingsSheet({
     };
 
     const clearAllData = () => {
-        // Clear all localStorage data
-        localStorage.removeItem("zonepro-data");
-
+        // Clear all known localStorage keys (both unscoped and scoped)
+        for (const key of ALL_STORAGE_KEYS) {
+            localStorage.removeItem(key);
+            if (userId) {
+                localStorage.removeItem(`${key}::${userId}`);
+            }
+        }
+        // Also clear the session key (scoped)
+        if (userId) {
+            localStorage.removeItem(`${STORAGE_KEY}::${userId}`);
+        }
         // Reload the page to reset all state
         window.location.reload();
     };
@@ -124,7 +141,7 @@ export function SettingsSheet({
         <Sheet>
             <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="rounded-full">
-                    <Menu className="h-5 w-5" />
+                    <Settings className="h-5 w-5" />
                     <span className="sr-only">Settings</span>
                 </Button>
             </SheetTrigger>
@@ -137,6 +154,107 @@ export function SettingsSheet({
                 </SheetHeader>
 
                 <div className="space-y-6 py-4">
+                    {/* General Settings */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium">General</h3>
+
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="auto-music-pause">
+                                Auto-pause music during breaks
+                            </Label>
+                            <Switch
+                                id="auto-music-pause"
+                                checked={settings.autoMusicPause}
+                                onCheckedChange={(checked) =>
+                                    onUpdateSettings({ autoMusicPause: checked })
+                                }
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Default View</Label>
+                            <Select
+                                value={settings.defaultView}
+                                onValueChange={(v) =>
+                                    onUpdateSettings({ defaultView: v })
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="learn">Learn</SelectItem>
+                                    <SelectItem value="tasks">Tasks</SelectItem>
+                                    <SelectItem value="focus">Focus</SelectItem>
+                                    <SelectItem value="habits">Habits</SelectItem>
+                                    <SelectItem value="notes">Notes</SelectItem>
+                                    <SelectItem value="dashboard">Dashboard</SelectItem>
+                                    <SelectItem value="plan">Plan</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Task Default View</Label>
+                            <Select
+                                value={settings.taskDefaultView}
+                                onValueChange={(v) =>
+                                    onUpdateSettings({
+                                        taskDefaultView: v as "list" | "kanban" | "calendar",
+                                    })
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="list">List</SelectItem>
+                                    <SelectItem value="kanban">Kanban</SelectItem>
+                                    <SelectItem value="calendar">Calendar</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Daily Focus Budget (minutes)</Label>
+                            <Slider
+                                value={[settings.dailyTimeBudgetMinutes]}
+                                onValueChange={([value]) =>
+                                    onUpdateSettings({ dailyTimeBudgetMinutes: value })
+                                }
+                                max={720}
+                                min={60}
+                                step={30}
+                                className="mt-2"
+                            />
+                            <p className="text-sm text-muted-foreground mt-1">
+                                {Math.floor(settings.dailyTimeBudgetMinutes / 60)}h{" "}
+                                {settings.dailyTimeBudgetMinutes % 60 > 0 &&
+                                    `${settings.dailyTimeBudgetMinutes % 60}m`}
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Week Starts On</Label>
+                            <Select
+                                value={String(settings.weekStartsOn)}
+                                onValueChange={(v) =>
+                                    onUpdateSettings({
+                                        weekStartsOn: Number(v) as 0 | 1,
+                                    })
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="0">Sunday</SelectItem>
+                                    <SelectItem value="1">Monday</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
                     <Separator />
 
                     <div className="space-y-4">
@@ -201,11 +319,11 @@ export function SettingsSheet({
                             </p>
                         </div>
 
-                        {/* Redesigned Save Button - Grayish initially, black when changed */}
+                        {/* Save Button */}
                         <div className="pt-2">
                             {hasChanges && saveState === "idle" && (
                                 <p className="text-xs text-amber-600 dark:text-amber-400 mb-2 text-center font-medium">
-                                    ● Unsaved changes
+                                    Unsaved changes
                                 </p>
                             )}
 
@@ -236,7 +354,7 @@ export function SettingsSheet({
                                     </div>
                                 ) : (
                                     <span className="font-medium">
-                                        Save All Settings
+                                        Save Pomodoro Settings
                                     </span>
                                 )}
                             </Button>
@@ -256,7 +374,6 @@ export function SettingsSheet({
                             off.
                         </p>
                         <div className="flex gap-4">
-                            {/* Redesigned Export Button - Grayish style */}
                             <Button
                                 onClick={onExportSession}
                                 className="flex-1 bg-foreground/80 hover:bg-foreground transition-colors duration-200"

@@ -4,7 +4,10 @@ import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Task } from "@/types";
 import { PRIORITY_CONFIG } from "./task-item";
@@ -12,11 +15,15 @@ import { PRIORITY_CONFIG } from "./task-item";
 interface TaskCalendarViewProps {
     tasksByDate: Record<string, Task[]>;
     onClick: (task: Task) => void;
+    onToggle?: (id: string) => void;
+    onDelete?: (id: string) => void;
 }
 
 export function TaskCalendarView({
     tasksByDate,
     onClick,
+    onToggle,
+    onDelete,
 }: TaskCalendarViewProps) {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
         new Date(),
@@ -73,8 +80,22 @@ export function TaskCalendarView({
                                         onClick={() => onClick(task)}
                                     >
                                         <div className="flex items-center gap-2">
+                                            {onToggle && (
+                                                <Checkbox
+                                                    checked={
+                                                        task.status === "done"
+                                                    }
+                                                    onCheckedChange={(e) => {
+                                                        e; // consume
+                                                        onToggle(task.id);
+                                                    }}
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
+                                                />
+                                            )}
                                             <span
-                                                className={`text-sm ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}
+                                                className={`text-sm flex-1 ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}
                                             >
                                                 {task.title}
                                             </span>
@@ -88,6 +109,19 @@ export function TaskCalendarView({
                                                         ].label
                                                     }
                                                 </Badge>
+                                            )}
+                                            {onDelete && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDelete(task.id);
+                                                    }}
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </Button>
                                             )}
                                         </div>
                                     </div>

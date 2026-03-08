@@ -3,11 +3,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, Flame, Target } from "lucide-react";
 
 interface HabitStatsProps {
+    /** Current consecutive-day streak for the selected habit */
     streak: number;
+    /** 30-day completion rate (%) for the selected habit */
     completionRate: number;
+    /** Total number of logged completions for the selected habit */
     totalCompletions: number;
 }
 
+/** Displays per-habit statistics. All values are scoped to the currently selected habit. */
 export function HabitStats({
     streak,
     completionRate,

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { AppHeader } from "@/components/app-header";
-import { FloatingNav, MobileNav } from "@/components/floating-nav";
+import { FloatingNav } from "@/components/floating-nav";
+import { MobileNav } from "@/components/mobile-nav";
 import { MiniMusicPlayer } from "@/components/mini-music-player";
 import { MiniPomodoro } from "@/components/mini-pomodoro";
 import { CommandPalette } from "@/components/command-palette";
@@ -15,6 +16,11 @@ import { useMusicPlayer } from "@/hooks/use-music-player";
 import { useMusicPlayerEngine } from "@/hooks/use-music-player-engine";
 import { useSessionPersistence } from "@/hooks/use-session-persistence";
 import { useCloudSync } from "@/hooks/use-cloud-sync";
+import { AppDataProvider } from "@/contexts/app-data-context";
+import { LearnProvider } from "@/contexts/learn-context";
+import { UserIdProvider } from "@/contexts/user-id-context";
+import { DEFAULT_APP_SETTINGS } from "@/lib/constants";
+import type { AppSettings } from "@/types";
 import { LearnSection } from "@/components/sections/learn-section";
 import { TasksSection } from "@/components/sections/tasks-section";
 import { FocusSection } from "@/components/sections/focus-section";
@@ -38,7 +44,22 @@ export default function ZoneProApp() {
     const [commandOpen, setCommandOpen] = useState(false);
 
     // --- Lifted shared state ---
-    const { isYTReady } = useYouTubeAPI();
+
+    const {
+        musicPlayer,
+        setMusicPlayer,
+        musicWasPlaying,
+        setMusicWasPlaying,
+        updateMusicPlayer,
+        handleMusicControl,
+        playTrack,
+        deleteTrack,
+        activated,
+        activate,
+        deactivate,
+    } = useMusicPlayer();
+
+    const { isYTReady } = useYouTubeAPI(activated || activeSection === "learn");
 
     const {
         courses,
@@ -71,17 +92,6 @@ export default function ZoneProApp() {
     } = usePomodoro();
 
     const {
-        musicPlayer,
-        setMusicPlayer,
-        musicWasPlaying,
-        setMusicWasPlaying,
-        updateMusicPlayer,
-        handleMusicControl,
-        playTrack,
-        deleteTrack,
-    } = useMusicPlayer();
-
-    const {
         playMusic,
         pauseMusic,
         playNextTrack,
@@ -92,9 +102,11 @@ export default function ZoneProApp() {
         isYTReady,
         musicPlayer,
         onUpdateMusicPlayer: updateMusicPlayer,
+        activated,
+        onDeactivate: deactivate,
     });
 
-    const [settings, setSettings] = useState({ autoMusicPause: true });
+    const [settings, setSettings] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
     const [newMusicUrl, setNewMusicUrl] = useState("");
     const [showMusicQueue, setShowMusicQueue] = useState(false);
 
@@ -109,7 +121,7 @@ export default function ZoneProApp() {
         },
     );
 
-    const { syncStatus } = useCloudSync(
+    const { syncStatus, userId } = useCloudSync(
         { courses, pomodoro, musicPlayer, settings },
         { setCourses, setPomodoro, setMusicPlayer, setSettings },
         isLoaded,
@@ -133,7 +145,7 @@ export default function ZoneProApp() {
             pomodoro={pomodoro}
             coursesCount={courses.length}
             musicTracksCount={musicPlayer.playlist.length}
-            onUpdateSettings={(updates: Partial<{ autoMusicPause: boolean }>) =>
+            onUpdateSettings={(updates: Partial<AppSettings>) =>
                 setSettings((prev) => ({ ...prev, ...updates }))
             }
             onUpdatePomodoro={updatePomodoro}
@@ -142,18 +154,33 @@ export default function ZoneProApp() {
         />
     );
 
+    const pomodoroActions = useMemo(() => ({
+        pomodoro,
+        startPomodoro,
+        pausePomodoro,
+        resetPomodoro,
+        skipToBreak,
+        skipToWork,
+        setMode: setPomodoroMode,
+        setTimerDuration,
+    }), [pomodoro, startPomodoro, pausePomodoro, resetPomodoro, skipToBreak, skipToWork, setPomodoroMode, setTimerDuration]);
+
     return (
+        <UserIdProvider userId={userId}>
+        <AppDataProvider settings={settings} pomodoroActions={pomodoroActions}>
         <div className="flex h-svh flex-col bg-background overflow-hidden">
-            {/* Hidden YouTube Player -- must never unmount */}
-            <div
-                style={{
-                    position: "absolute",
-                    left: "-9999px",
-                    top: "-9999px",
-                }}
-            >
-                <div id="music-player"></div>
-            </div>
+            {/* Hidden YouTube Player -- rendered only after user activates music */}
+            {activated && (
+                <div
+                    style={{
+                        position: "absolute",
+                        left: "-9999px",
+                        top: "-9999px",
+                    }}
+                >
+                    <div id="music-player"></div>
+                </div>
+            )}
 
             <AppHeader
                 title={SECTION_TITLES[activeSection] || "ZonePro"}
@@ -169,6 +196,11 @@ export default function ZoneProApp() {
                     pomodoro={pomodoro}
                     onStart={startPomodoro}
                     onPause={pausePomodoro}
+                    onReset={resetPomodoro}
+                    onSkipToBreak={skipToBreak}
+                    onSkipToWork={skipToWork}
+                    onSetMode={setPomodoroMode}
+                    onSetTimerDuration={setTimerDuration}
                 />
                 <MiniMusicPlayer
                     musicPlayer={musicPlayer}
@@ -187,40 +219,22 @@ export default function ZoneProApp() {
                         loadAndPlayTrack(track);
                     }}
                     onDeleteTrack={deleteTrack}
+                    onActivate={activate}
                 />
             </AppHeader>
 
             <main className="flex-1 overflow-y-auto p-4 pb-24">
                 {activeSection === "learn" && (
-                    <LearnSection
-                        isYTReady={isYTReady}
-                        courses={courses}
-                        currentCourse={currentCourse}
-                        setCurrentCourse={setCurrentCourse}
-                        newCourseUrl={newCourseUrl}
-                        setNewCourseUrl={setNewCourseUrl}
-                        newCourseTitle={newCourseTitle}
-                        setNewCourseTitle={setNewCourseTitle}
-                        showAddCourse={showAddCourse}
-                        setShowAddCourse={setShowAddCourse}
-                        addCourse={addCourse}
-                        selectCourse={selectCourse}
-                        updateCourse={updateCourse}
-                        deleteCourse={deleteCourse}
-                        pomodoro={pomodoro}
-                        startPomodoro={startPomodoro}
-                        pausePomodoro={pausePomodoro}
-                        resetPomodoro={resetPomodoro}
-                        skipToBreak={skipToBreak}
-                        skipToWork={skipToWork}
-                        setPomodoroMode={setPomodoroMode}
-                        setTimerDuration={setTimerDuration}
-                        settings={settings}
-                        handleMusicControl={handleMusicControl}
-                        musicWasPlaying={musicWasPlaying}
-                        setMusicWasPlaying={setMusicWasPlaying}
-                        syncStatus={syncStatus}
-                    />
+                    <LearnProvider value={{
+                        isYTReady, courses, currentCourse, setCurrentCourse,
+                        newCourseUrl, setNewCourseUrl, newCourseTitle, setNewCourseTitle,
+                        showAddCourse, setShowAddCourse, addCourse, selectCourse,
+                        updateCourse, deleteCourse, settings,
+                        handleMusicControl, musicWasPlaying, setMusicWasPlaying,
+                        syncStatus,
+                    }}>
+                        <LearnSection />
+                    </LearnProvider>
                 )}
                 {activeSection === "tasks" && <TasksSection />}
                 {activeSection === "focus" && <FocusSection />}
@@ -249,5 +263,7 @@ export default function ZoneProApp() {
                 }}
             />
         </div>
+        </AppDataProvider>
+        </UserIdProvider>
     );
 }

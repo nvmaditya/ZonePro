@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Flame } from "lucide-react";
-import { useHabits } from "@/hooks/use-habits";
+import { useAppHabits } from "@/contexts/app-data-context";
 import { HabitList } from "@/components/habits/habit-list";
 import { HabitDotGrid } from "@/components/habits/habit-dot-grid";
 import { HabitDetailDialog } from "@/components/habits/habit-detail-dialog";
@@ -12,9 +12,17 @@ import type { Habit } from "@/types";
 
 export function HabitsSection() {
     const {
-        activeHabits, habitLogs, addHabit, updateHabit, deleteHabit,
-        toggleCompletion, getCompletionForDate, getStreak, getCompletionRate, getTodayHabits,
-    } = useHabits();
+        activeHabits,
+        habitLogs,
+        addHabit,
+        updateHabit,
+        deleteHabit,
+        toggleCompletion,
+        getCompletionForDate,
+        getStreak,
+        getCompletionRate,
+        getTodayHabits,
+    } = useAppHabits();
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -24,11 +32,13 @@ export function HabitsSection() {
 
     const streaks = useMemo(() => {
         const map: Record<string, number> = {};
-        activeHabits.forEach(h => { map[h.id] = getStreak(h.id); });
+        activeHabits.forEach((h) => {
+            map[h.id] = getStreak(h.id);
+        });
         return map;
     }, [activeHabits, getStreak]);
 
-    const selectedHabit = activeHabits.find(h => h.id === selectedHabitId);
+    const selectedHabit = activeHabits.find((h) => h.id === selectedHabitId);
 
     const handleSave = (data: Partial<Habit> & { title: string }) => {
         if (editingHabit) {
@@ -44,7 +54,8 @@ export function HabitsSection() {
     };
 
     const totalCompletions = selectedHabitId
-        ? habitLogs.filter(l => l.habitId === selectedHabitId && l.count > 0).length
+        ? habitLogs.filter((l) => l.habitId === selectedHabitId && l.count > 0)
+              .length
         : 0;
 
     return (
@@ -55,7 +66,13 @@ export function HabitsSection() {
                     <Flame className="w-5 h-5" />
                     Today&apos;s Habits
                 </h2>
-                <Button size="sm" onClick={() => { setEditingHabit(null); setDialogOpen(true); }}>
+                <Button
+                    size="sm"
+                    onClick={() => {
+                        setEditingHabit(null);
+                        setDialogOpen(true);
+                    }}
+                >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Habit
                 </Button>
@@ -85,8 +102,26 @@ export function HabitsSection() {
                         targetCount={selectedHabit.targetCount}
                     />
                     <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => { setEditingHabit(selectedHabit); setDialogOpen(true); }}>Edit</Button>
-                        <Button size="sm" variant="destructive" onClick={() => { deleteHabit(selectedHabit.id); setSelectedHabitId(null); }}>Delete</Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                                setEditingHabit(selectedHabit);
+                                setDialogOpen(true);
+                            }}
+                        >
+                            Edit
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => {
+                                deleteHabit(selectedHabit.id);
+                                setSelectedHabitId(null);
+                            }}
+                        >
+                            Delete
+                        </Button>
                     </div>
                 </div>
             )}
@@ -94,8 +129,10 @@ export function HabitsSection() {
             {/* Dot grids for all habits */}
             {!selectedHabitId && activeHabits.length > 0 && (
                 <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-muted-foreground">30-Day Overview</h3>
-                    {activeHabits.map(habit => (
+                    <h3 className="text-sm font-semibold text-muted-foreground">
+                        30-Day Overview
+                    </h3>
+                    {activeHabits.map((habit) => (
                         <HabitDotGrid
                             key={habit.id}
                             habitId={habit.id}

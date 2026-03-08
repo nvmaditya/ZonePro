@@ -7,47 +7,68 @@ import type {
     PomodoroSession,
     MusicPlayer,
     SessionData,
+    AppSettings,
 } from "@/types";
-import { STORAGE_KEY, OLD_STORAGE_KEY } from "@/lib/constants";
+import {
+    STORAGE_KEY,
+    OLD_STORAGE_KEY,
+    ALL_STORAGE_KEYS,
+    DEFAULT_APP_SETTINGS,
+} from "@/lib/constants";
 import { DEFAULT_POMODORO } from "@/hooks/use-pomodoro";
 import { DEFAULT_MUSIC_PLAYER } from "@/hooks/use-music-player";
+import { useUserId } from "@/contexts/user-id-context";
 
-const DEFAULT_SETTINGS = { autoMusicPause: true };
+function scopeKey(key: string, userId: string | null): string {
+    return userId ? `${key}::${userId}` : key;
+}
 
 interface PersistenceSetters {
     setCourses: (courses: CourseProgress[]) => void;
     setCurrentCourse: (course: CourseProgress | null) => void;
     setPomodoro: (pomodoro: PomodoroSession) => void;
     setMusicPlayer: (player: MusicPlayer) => void;
-    setSettings: (settings: { autoMusicPause: boolean }) => void;
+    setSettings: (settings: AppSettings) => void;
 }
 
 interface PersistenceState {
     courses: CourseProgress[];
     pomodoro: PomodoroSession;
     musicPlayer: MusicPlayer;
-    settings: { autoMusicPause: boolean };
+    settings: AppSettings;
 }
 
 export function useSessionPersistence(
     state: PersistenceState,
     setters: PersistenceSetters,
 ) {
+    const { userId } = useUserId();
     const [isLoaded, setIsLoaded] = useState(false);
+
+    const sessionKey = scopeKey(STORAGE_KEY, userId);
 
     // Load data from localStorage on mount (with migration from old key)
     useEffect(() => {
         if (typeof window === "undefined") return;
 
-        let savedData = localStorage.getItem(STORAGE_KEY);
+        let savedData = localStorage.getItem(sessionKey);
 
         // Migrate from old storage key if new key has no data
         if (!savedData) {
             const oldData = localStorage.getItem(OLD_STORAGE_KEY);
             if (oldData) {
                 savedData = oldData;
-                localStorage.setItem(STORAGE_KEY, oldData);
+                localStorage.setItem(sessionKey, oldData);
                 localStorage.removeItem(OLD_STORAGE_KEY);
+            }
+        }
+
+        // One-time migration: copy unscoped data to scoped key
+        if (!savedData && userId) {
+            const unscoped = localStorage.getItem(STORAGE_KEY);
+            if (unscoped) {
+                savedData = unscoped;
+                localStorage.setItem(sessionKey, unscoped);
             }
         }
 
@@ -66,13 +87,16 @@ export function useSessionPersistence(
                 );
                 setters.setPomodoro(data.pomodoro || DEFAULT_POMODORO);
                 setters.setMusicPlayer(data.music || DEFAULT_MUSIC_PLAYER);
-                setters.setSettings(data.settings || DEFAULT_SETTINGS);
+                setters.setSettings({
+                    ...DEFAULT_APP_SETTINGS,
+                    ...data.settings,
+                });
             } catch {
                 // Corrupted data, start fresh
             }
         }
         setIsLoaded(true);
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [sessionKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Save data to localStorage whenever state changes
     useEffect(() => {
@@ -84,16 +108,18 @@ export function useSessionPersistence(
             settings: state.settings,
             timestamp: new Date(),
         };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+        localStorage.setItem(sessionKey, JSON.stringify(sessionData));
     }, [
         state.courses,
         state.pomodoro,
         state.musicPlayer,
         state.settings,
         isLoaded,
+        sessionKey,
     ]);
 
     const exportSession = useCallback(() => {
+        // Export monolithic session data
         const sessionData: SessionData = {
             courses: state.courses,
             pomodoro: state.pomodoro,
@@ -101,7 +127,21 @@ export function useSessionPersistence(
             settings: state.settings,
             timestamp: new Date(),
         };
-        const dataStr = JSON.stringify(sessionData, null, 2);
+
+        // Also collect per-domain keys (scoped)
+        const allData: Record<string, unknown> = { session: sessionData };
+        for (const key of ALL_STORAGE_KEYS) {
+            const val = localStorage.getItem(scopeKey(key, userId));
+            if (val) {
+                try {
+                    allData[key] = JSON.parse(val);
+                } catch {
+                    allData[key] = val;
+                }
+            }
+        }
+
+        const dataStr = JSON.stringify(allData, null, 2);
         const dataBlob = new Blob([dataStr], { type: "application/json" });
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement("a");
@@ -109,7 +149,7 @@ export function useSessionPersistence(
         link.download = `zonepro-session-${new Date().toISOString().split("T")[0]}.json`;
         link.click();
         URL.revokeObjectURL(url);
-    }, [state.courses, state.pomodoro, state.musicPlayer, state.settings]);
+    }, [state.courses, state.pomodoro, state.musicPlayer, state.settings, userId]);
 
     const importSession = useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,9 +159,11 @@ export function useSessionPersistence(
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
-                    const data: SessionData = JSON.parse(
-                        e.target?.result as string,
-                    );
+                    const raw = JSON.parse(e.target?.result as string);
+
+                    // Support new format (with per-domain keys) and legacy format
+                    const data: SessionData = raw.session || raw;
+
                     setters.setCourses(
                         (data.courses || []).map((course) => ({
                             ...course,
@@ -134,15 +176,28 @@ export function useSessionPersistence(
                     );
                     setters.setPomodoro(data.pomodoro || DEFAULT_POMODORO);
                     setters.setMusicPlayer(data.music || DEFAULT_MUSIC_PLAYER);
-                    setters.setSettings(data.settings || DEFAULT_SETTINGS);
+                    setters.setSettings({
+                        ...DEFAULT_APP_SETTINGS,
+                        ...data.settings,
+                    });
                     setters.setCurrentCourse(null);
+
+                    // Restore per-domain keys (scoped)
+                    for (const key of ALL_STORAGE_KEYS) {
+                        if (raw[key] !== undefined) {
+                            localStorage.setItem(
+                                scopeKey(key, userId),
+                                JSON.stringify(raw[key]),
+                            );
+                        }
+                    }
                 } catch {
                     // Invalid session file
                 }
             };
             reader.readAsText(file);
         },
-        [], // eslint-disable-line react-hooks/exhaustive-deps
+        [userId], // eslint-disable-line react-hooks/exhaustive-deps
     );
 
     return { isLoaded, exportSession, importSession };
