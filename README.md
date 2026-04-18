@@ -36,6 +36,7 @@ ZonePro brings together seven productivity modules (Learn, Tasks, Focus, Habits,
 - Weekly review, goals with milestones, and daily “Top 3” planning
 - Command palette, global keyboard shortcuts, and responsive layout
 - Local-first data with optional Supabase cloud sync
+- Session export/import for local backups
 
 ## Core Sections
 
@@ -83,6 +84,7 @@ ZonePro brings together seven productivity modules (Learn, Tasks, Focus, Habits,
 
 - Persistent header player with queue, shuffle, and repeat
 - YouTube audio playback with auto-pause rules
+- Default queue starts with a lofi stream, and you can add custom YouTube URLs
 
 ## Keyboard Shortcuts
 
@@ -208,7 +210,7 @@ ZonePro/
 
 ## Data and Sync
 
-ZonePro is local-first. All data is stored in `localStorage` by default. When you sign in, data can sync to Supabase for cross-device access. You can export/import session data from Settings for local backups.
+ZonePro is local-first. All data is stored in `localStorage` by default. When you sign in, data can sync to Supabase for cross-device access. Settings includes export/import tools for local backups and a “clear all data” action for a full reset.
 
 ## Architecture Notes
 
